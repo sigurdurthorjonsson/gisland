@@ -1,0 +1,1316 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{amstext}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[pdftex]{hyperref}
+
+\begin{document}
+
+\title{Lög um veiðar}
+\author{Einar Hjörleifsson}
+\maketitle
+
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(warning=FALSE,
+               message=FALSE,
+               fig.align='center',
+               fig.path='figure/log/',
+               fig.width=8.5,
+               fig.height=6.5,
+               tidy=TRUE,
+               tidy.opts=list(width.cutoff=55),
+               pretty=FALSE,
+               echo=FALSE,
+               eval=FALSE)
+require(xtable)
+require(gisland)
+require(sp)
+require(rgdal)
+require(rgeos)
+@
+
+\newpage{}
+<<sessionInfo, results='asis', echo=FALSE>>=
+toLatex(sessionInfo())
+@
+
+This is a rudimentary draft text.
+
+<<x, comment='', echo=FALSE>>=
+print(paste('This document was created in knitr',now()))
+@
+
+\newpage{}
+\section*{Preamble}
+This document describes the basis of the spatial coordinates of various fishing zones in biceland, such as the current and older EEZ zones, various fishing zone limits including restrictions based on fishing gear, vessel size and permanent or semi-permanent protected areas with emphasis on setting them up in a usable format in R. Emphasis is made to infer derived objects from the base, the derivation however being compared with various available second-hand sources at the end of the document.
+
+The focus of the document is primarily to create a spatial object library that can be used in consequent analysis within R. In addtion: 1) The objects are transformed into conventional \emph{data.frame} so that they can be used with packages like \emph{geo}. 2) The objects/data are also externally saved in a standard spatial format that can subsequently be imported into other gis software.
+
+Although main objective of this document is to generate ..., it is written in the spirit of also acting as a tutorial, providing hopefully some reasonably understandable steps with respect to ...
+
+\section*{On syntax}
+
+In the scripts below the following suffixes are used to make distinctions between \emph{class}es of objects that more or less :
+\begin{itemize}
+  \item *.df   - \emph{data.frame}
+  \item *.st   - \emph{SpatialPoints}
+  \item *.stdf - \emph{SpatialPointDataFrame}
+  \item *.sl   - \emph{SpatialLines}
+  \item *.sldf - \emph{SpatialLineDataFrame}
+  \item *.sp   - \emph{SpatialPolygon(s)}
+  \item *.spdf - \emph{SpatialPoloygonDataFrame}
+\end{itemize}
+
+\section*{Some constants and functions}
+
+<<some_constants>>=
+PRO   <- sp::CRS('+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0')
+ISN93 <- sp::CRS('+proj=lcc +lat_1=64.25 +lat_2=65.75 +lat_0=65 +lon_0=-19 
+                 +x_0=500000 +y_0=500000 +ellps=GRS80 +units=m +no_defs')
+use_data(PRO, ISN93)
+@
+
+<<some_function, eval=TRUE>>=
+prettyCoords <- function(dat) {
+  x <- dat[,1]
+  x <- paste(stringr::str_sub(x,1,2),"°",stringr::str_sub(x,3,4),"'",stringr::str_sub(x,5,6)," N",sep="")
+  dat[,1] <- x
+  y <- dat[,2]
+  y <- paste(stringr::str_sub(y,1,2),"°",stringr::str_sub(y,3,4),"'",stringr::str_sub(y,5,6)," W",sep="")
+  dat[,2] <- y
+  names(dat) <- c("Breidd","Lengd")
+  row.names(dat) <- 1:nrow(dat)
+  return(dat)
+}
+
+toSPoly <- function(x,id) {
+  x$lon <- -geo_convert(x$lengd)
+  x$lat <-  geo_convert(x$breidd)
+  x <- rbind(x,x[1,])
+  x <- sp::Polygon(x[,c('long','lat')],hole=FALSE)
+  x <- sp::Polygons(list(x),ID=as.character(id))
+  return(x)
+}
+
+tmpSPDF <- function(SPlist,datDF,PRO) {
+  tmpSP <- sp::SpatialPolygons(SPlist,proj4string = PRO)
+  row.names(datDF) <- 1:nrow(datDF)
+  tmp.spdf <- sp::SpatialPolygonsDataFrame(tmpSP,data=datDF)
+}
+pck.path <- path.package("gisland")
+SPlist <- list()
+@
+
+
+\newpage{}
+\section*{Íslenska strandlínan}
+
+Í lögum og reglum er varða stjórn fiskveiða er í sumum tilfellum vísað til fjarlægðar frá (stórstraums)fjöruborði. Upplýsingar um hnit fjöruborðs eru tekin frá Landmælingum Íslands. Línur og flákar er hægt að nálgast á vef LMÍ (http://atlas.lmi.is/LmiData/index.php, IS50V\_STRANDLINA\_01072013\_ISN93.zip). Í frumgögnunum eru xxx flákar og fjöldi hnitpunkta er xxx. Gerð var "þynnri" útgáfa af gögnunum, þar sem skerjum var sleppt og hnitpunktum í því sem eftir var fækkað um u.þ.b. fjórfalt. Niðurstaðan varð   508 flákar (eyjar) mep samtals 75086 hnitpuntkum.
+
+<<r, eval=TRUE, echo=TRUE>>=
+sp::plot(iceland, col="grey90")
+@
+
+<<message=FALSE>>=
+# The source
+dsn <- "/home/einarhj/r/Pakkar/gisland/data-raw/LMI/IS50V_STRANDLINA_SHP"
+biceland <-
+  rgdal::readOGR(dsn,'is50v_strandlina_flakar_01072013',encoding="ISO-8859-1")
+x <- biceland@data
+x <- x[,c("EYJARSKER","SHAPE_Area")]
+biceland@data <- x
+biceland <- sp::spTransform(biceland,PRO)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(biceland)
+@
+
+<<eval=TRUE>>=
+# Create a thinner version (to be saved in the package)
+i <- biceland$EYJARSKER == 1
+df <- biceland@data[i,]
+sp  <- biceland[i,]
+# thin the data
+sp <- rgeos::gSimplify(sp,0.0001,topologyPreserve=TRUE)
+iceland <- sp::SpatialPolygonsDataFrame(sp, df, match.ID = TRUE)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(iceland)
+@
+
+
+\newpage{}
+\section*{\href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}}
+
+\textbf{I. Landhelgi.}
+
+\textbf{1. gr.} Landhelgi Íslands skal afmörkuð af línu sem alls staðar er 12 sjómílur frá grunnlínu sem dregin er milli eftirtalinna staða:
+
+<<eval=TRUE, results='asis', echo=FALSE>>=
+cn <- c("id","name","breidd","lengd","area")
+d <- grunnpunktar@data[,cn]
+names(d) <- c("Nr","Nafn","Breidd","Lengd","area")
+d$Breidd <- pretty_coordinates(d$Breidd,"N")
+d$Lengd  <- pretty_coordinates(d$Lengd,"W")
+print(xtable(d[d$area == "main",]),include.rownames=FALSE)
+@
+
+Landhelgin skal auk þess afmörkuð af línu sem alls staðar er 12 sjómílur frá stórstraumsfjöruborði Kolbeinseyjar (67°08'9 n.br., 18°41'3 v.lg.), Hvalbaks (64°35'8 n.br., 13°16'6 v.lg.) og ystu annesja og skerja Grímseyjar. Hver sjómíla reiknast 1852 metrar.
+
+<<eval=TRUE, results='asis'>>=
+print(xtable(d[d$area != "main",]),include.rownames=FALSE)
+@
+
+\begin{figure}[H]
+<<eval=TRUE, warning=FALSE>>=
+sp::plot(landhelgi,col="grey90")
+sp::plot(grunnlina,border='yellow',lwd=3,add=TRUE)
+sp::plot(grunnpunktar,col="red",add=TRUE)
+@
+\caption{Landhelgi Íslands ásamt grunnpunktum (rautt) og viðmiðunarlínum (gult)}
+\label{fig:landhelgi}
+\end{figure}
+
+
+<<>>=
+gpoints.df <- read.table(paste(pck.path,"extdata/GRUNNPUNKTAR.dat",sep="/"),
+                         header=TRUE,
+                         stringsAsFactors=FALSE)
+Encoding(gpoints.df$name) <- "UTF-8"
+gpoints.df$area <- "main"
+gpoints.df$reference="Lög 1979_0041"
+
+Kolbeinsey <- data.frame(id=nrow(gpoints.df)+1,
+                   name='Kolbeinsey',
+                   breidd=670880,
+                   lengd=184060,
+                   area="island",
+                   reference="Lög 1979_0041")
+Hvalbakur <- data.frame(id=nrow(gpoints.df)+2,
+                   name='Hvalbakur',
+                   breidd=643580,
+                   lengd=131660,
+                   area="island",
+                   reference="Lög 1979_0041")
+# Temporary fix - approximately center of island
+Grimsey <- data.frame(id=nrow(gpoints.df)+3,
+                   name='Grímsey',
+                   breidd=663240,
+                   lengd=180000,
+                   area="island",
+                   reference="einar hjorleifsson")
+# Collate points into a single data.frame
+gpoints.df <- rbind(gpoints.df,Kolbeinsey,Hvalbakur,Grimsey)
+# Convert the georeference points to coordinates
+gpoints.df$long <- -fishvice::geo_convert(gpoints.df$lengd)
+gpoints.df$lat  <-  fishvice::geo_convert(gpoints.df$breidd)
+# Create spatial point data frame
+cn <- c("id","name","breidd","lengd","reference","area")
+Encoding(gpoints.df$name) <- "UTF-8"
+Encoding(gpoints.df$reference) <- "UTF-8"
+Encoding(gpoints.df$area) <- "UTF-8"
+
+
+grunnpunktar <- sp::SpatialPointsDataFrame(gpoints.df[,c('long','lat')],
+                                                gpoints.df[,cn],
+                                                proj4string=PRO)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(grunnpunktar)
+@
+
+<<>>=
+p1 <- grunnpunktar[grunnpunktar$area == "main",]
+l1 <- Line(rbind(coordinates(p1),coordinates(p1)[1,]))
+p1 <- spsample(l1, n=20000, type='regular')
+po1 <- Polygon(coordinates(p1))
+po1 <- Polygons(list(po1), ID=1)
+
+p <- grunnpunktar[grunnpunktar$name == "Kolbeinsey",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p, miles=0.05, quadsegs = 100)
+po2 <- sp@polygons[[1]]
+po2@ID <- "2"
+
+p <- grunnpunktar[grunnpunktar$name == "Hvalbakur",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p, miles=0.05, quadsegs = 100)
+po3 <- sp@polygons[[1]]
+po3@ID <- "3"
+
+CP <- as(raster::extent(-19, -17.5, 66.35, 67), "SpatialPolygons")
+proj4string(CP) <- PRO
+grimsey.sp <- rgeos::gIntersection(biceland, CP, byid=TRUE)
+x <- grimsey.sp@polygons
+# A bit of brute force here:
+po4 <- Polygons(list(x[[1]]@Polygons[[1]],
+                     x[[2]]@Polygons[[1]],
+                     x[[3]]@Polygons[[1]],
+                     x[[4]]@Polygons[[1]]),ID=4)
+
+grunnlina.sp <- SpatialPolygons(list(po1,po2,po3,po4),proj4string = PRO)
+df <- data.frame(ID=c(1:4),name=c("Mainland","Kolbeinsey","Hvalbakur","Grímsey"),
+                 stringsAsFactors=FALSE)
+Encoding(df$name) <- "UTF-8"
+grunnlina <- SpatialPolygonsDataFrame(grunnlina.sp,df)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(grunnlina)
+@
+
+<<>>=
+landhelgi.sp <- expand_sp(grunnlina, miles = 12, quadsegs = 100)
+landhelgi.sp <- rgeos::gDifference(landhelgi.sp,iceland)
+df <- data.frame(ID="1",name="biceland",area=geo_area(landhelgi.sp))
+landhelgi <- SpatialPolygonsDataFrame(landhelgi.sp,df)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(landhelgi)
+@
+
+
+\textbf{II. Efnahagslögsaga.}
+
+\textbf{3. gr.} Efnahagslögsaga Íslands er svæði utan landhelgi sem afmarkast af línu sem alls staðar er 200 sjómílur frá grunnlínum landhelginnar, sbr. þó 7. gr.
+
+\textbf{7. gr.} Afmörkun efnahagslögsögu og landgrunns milli Íslands og annarra landa skal eftir atvikum ákveðin með samningum við hlutaðeigandi ríki og skulu slíkir samningar háðir samþykki Alþingis.
+
+Þar til annað verður ákveðið skulu efnahagslögsaga og landgrunn Íslands miðuð við 200 sjómílur frá grunnlínum landhelginnar að því undanskildu þó að þar sem skemmra er en 400 sjómílur milli grunnlína Færeyja og Grænlands annars vegar og Íslands hins vegar skulu efnahagslögsaga og landgrunn Íslands afmarkast af miðlínu.
+
+<<eval=TRUE>>=
+midlinur <- read.table("/home/einarhj/r/Pakkar/gisland/inst/extdata/midlinur.dat",
+                       header=TRUE, stringsAsFactors=FALSE, sep=",")
+@
+
+Miðlína milli Íslands og Grænlands er byggð á \href{http://www.althingi.is/altext/122/s/1047.html}{Samningi milli Íslands og Danmerkur/Grænlands um afmörkun hafsvæðisins milli Íslands og Grænlands} sem gerður var  11. nóvember 1997. Markalínan er ákvörðuð sem beinar línur milli eftirfarandi punkta:
+<<results='asis', eval=TRUE>>=
+x <- midlinur[midlinur$Svaedi %in% "greenland",]
+x$Breidd <- pretty_coordinates(x$Breidd,"N")
+x$Lengd  <- pretty_coordinates(x$Lengd,"W")
+print(xtable(x[,c("id","Breidd","Lengd")]),include.rownames=FALSE)
+@
+
+Markalínan á landsvæðinu milli Íslands, Jan Mayen og Grænlands er bein landfræðileg lína milli neðangreindra punkta:
+<<results='asis', eval=TRUE>>=
+x <- midlinur[midlinur$Svaedi %in% "janmayen",]
+x$Breidd <- pretty_coordinates(x$Breidd,"N")
+x$Lengd  <- pretty_coordinates(x$Lengd,"W")
+print(xtable(x[,c("id","Breidd","Lengd")]),include.rownames=FALSE)
+@
+
+Miðlína milli Ísland og Færeyja er byggð á \href{http://www.althingi.is/altext/133/s/0951.html}{samningi milli ríkisstjórnar Íslands annars vegar og
+ríkisstjórnar konungsríkisins Danmerkur og landstjórnar Færeyja hins vegar} sem gerður var 25. september 2002. Markalínan er ákvörðuð sem beinar línur milli eftirfarandi punkta:
+<<results='asis', eval=TRUE>>=
+x <- midlinur[midlinur$Svaedi %in% "faroe",]
+x$Breidd <- pretty_coordinates(x$Breidd,"N")
+x$Lengd  <- pretty_coordinates(x$Lengd,"W")
+print(xtable(x[,c("id","Breidd","Lengd")]),include.rownames=FALSE)
+@
+
+<<eval=TRUE>>=
+midlinur$long <- -geo_convert(midlinur$Lengd)
+midlinur$lat  <-  geo_convert(midlinur$Breidd)
+@
+
+<<eval=TRUE>>=
+require(ggplot2)
+eez.sp <- expand_sp(grunnlina, miles = 200, quadsegs = 100)
+eez.sp <- rgeos::gDifference(eez.sp,iceland)
+df <- data.frame(ID="1",name="biceland",area=geo_area(eez.sp))
+eez.sp <- SpatialPolygonsDataFrame(eez.sp,df)
+x <- fortify(eez.sp)
+x2 <- x[x$hole == FALSE,]
+
+# ------------------------------------------------------------------------------
+# Create the eez spatial
+i <- midlinur$midline %in% "faroe"
+i <- midlinur$Svaedi %in% "faroe"
+l1 <- midlinur[i,]
+x <- data.frame(id="dum",
+                Breidd=NA,
+                Lengd=NA,
+                Svaedi="dum",
+                long=0,
+                lat =60.70578)
+p <- rbind(l1,x,l1[1,])
+
+p <- sp::Polygon(p[,c('long','lat')],hole=FALSE)
+p <- sp::Polygons(list(p),ID="1")
+sp <- sp::SpatialPolygons(list(p),proj4string = PRO)
+#plot(eez.sp)
+#plot(sp,add=TRUE,col="yellow")
+eez <- gDifference(eez.sp,sp)
+#plot(eez)
+
+l1 <- midlinur[!i,]
+row.names(l1) <- 1:nrow(l1)
+
+l1 <- rbind(l1[19,],l1[18,],l1[1:17,])
+x <- data.frame(id=c("dum","dum","dum"),
+                Breidd=c(NA,NA,NA),
+                Lengd=c(NA,NA,NA),
+                Svaedi=c("dum","dum","dum"),
+                long=c(-40,-30.86333,-12.15400),                
+                lat =c(63.31333,75,75))
+p <- rbind(l1,x,l1[1,])
+
+p <- sp::Polygon(p[,c('long','lat')],hole=FALSE)
+p <- sp::Polygons(list(p),ID="1")
+sp <- sp::SpatialPolygons(list(p),proj4string = PRO)
+#plot(eez.sp)
+#plot(sp,add=TRUE,col="yellow")
+eez <- gDifference(eez,sp)
+#plot(eez,col="grey90")
+df <- data.frame(ID="1",name="biceland",area=geo_area(eez))
+eez <- sp::SpatialPolygonsDataFrame(eez,df)
+@
+
+<<eez_save, eval=FALSE>>=
+devtools::use_data(eez)
+@
+
+\begin{figure}[H]
+<<eval=TRUE>>=
+x <- fortify(iceland)
+y <- fortify(eez)
+y <- y[y$hole == FALSE,]
+i <- midlinur$midline %in% "faroe"
+p <- ggplot(y,aes(long,lat)) +
+  theme_bw() +
+  geom_polygon(aes(group=group), fill="grey90") +
+  geom_polygon(data=x[x$hole == FALSE,],aes(long,lat,group=group),fill="white") +
+  geom_text(data=midlinur,aes(long,lat,label=id),alpha=0.5,col="blue",angle=45) +
+  geom_path(data=midlinur,aes(long,lat,group=Svaedi),col="blue",alpha=0.2) +
+  geom_point(col="red",size=1) +
+  labs(x="",y="") +
+  coord_map()
+p
+@
+\caption{Íslenska efnahagslögsagan, byggt á 200 mílna fjarlægð frá grunnlínu og miðlínu samkvæmt punkthnitum í milliríkjasamningum.}
+\label{fig:eez}
+\end{figure}
+
+\newpage{}
+\section*{\href{http://www.althingi.is/lagas/nuna/1997079.html}{Lög um veiðar í fiskveiðilandhelgi Íslands með síðari breytingum}}
+
+5. gr. Íslenskum skipum eru bannaðar veiðar með botnvörpu, flotvörpu og dragnót í fiskveiðilandhelgi Íslands nema á þeim veiðisvæðum og veiðitímum sem tilgreind eru í þessari grein, enda undanþiggi ráðherra ekki tiltekin svæði slíkum veiðum. Þegar rætt er um viðmiðunarlínu er átt við línu sem dregin er umhverfis landið á milli eftirtalinna staða:
+
+<<vidmidunarlina1, results='asis', eval=TRUE>>=
+vpoints.df <- read.table(paste(pck.path,"extdata/VIDMIDUNARPUNKTAR.dat",sep="/"),sep="\t",header=TRUE, encoding="UTF-8", stringsAsFactors=FALSE)
+Encoding(vpoints.df$Nafn) <- "UTF-8"
+
+vpoints.df$breidd <- vpoints.df$breidd * 10
+vpoints.df$lengd <- vpoints.df$lengd * 10
+
+# pretty printing
+x <- vpoints.df
+names(x) <- c("Nr","Nafn","Grunnpunktur","Breidd","Lengd")
+x$Breidd <- prettyCoords(dat=x[,c("Breidd","Lengd")])$Breidd
+x$Lengd <- prettyCoords(dat=x[,c("Breidd","Lengd")])$Lengd
+print(xtable::xtable(x),include.rownames=FALSE,scalebox=0.9)
+@
+
+<<vidmidunarlina2, eval=TRUE>>=
+# Viðbótarpunktar
+vpoints.df$reference <- "Lög 1997_0079"
+vpoints.df$area <- "main"
+Grimsey <- data.frame(id=NA,
+                   Nafn='Grímsey',
+                   Grunnpunktur=NA,
+                   breidd=663240,
+                   lengd=180000,
+                   reference="einar hjorleifsson",
+                   area="eyjar")
+Kolbeinsey <- data.frame(id=NA,
+                   Nafn='Kolbeinsey',
+                   Grunnpunktur=NA,
+                   breidd=670880,
+                   lengd=184060,
+                   reference="Lög 1979_0041",
+                   area="sker")
+Hvalbakur <- data.frame(id=NA,
+                   Nafn='Hvalbakur',
+                   Grunnpunktur=NA,
+                   breidd=643580,
+                   lengd=131660,
+                   reference="Lög 1979_0041",
+                   area="sker")
+Hvalnes <-  data.frame(id=NA,
+                   Nafn='Hvalnes',
+                   Grunnpunktur=NA,
+                   breidd=642410,
+                   lengd=143250,
+                   reference="Lög 1979_0041",
+                   area="sker")
+Surtsey <-  data.frame(id=NA,
+                   Nafn='Surtsey',
+                   Grunnpunktur=NA,
+                   breidd=631760,
+                   lengd=203630,
+                   reference="Lög 1979_0041",
+                   area="sker")
+Geirfugladrangi <- data.frame(id=NA,
+                   Nafn='Geirfugladrangi',
+                   Grunnpunktur=NA,
+                   breidd=634070,
+                   lengd=231710,
+                   reference="Lög 1979_0041",
+                   area="sker")
+vpoints.df <- rbind(vpoints.df,Grimsey,Kolbeinsey,Hvalbakur,Hvalnes,Surtsey,Geirfugladrangi)
+
+vpoints.df$long <- -geo_convert(vpoints.df$lengd)
+vpoints.df$lat <-  geo_convert(vpoints.df$breidd)
+
+names(vpoints.df) <- c('id','name','refpoint','breidd','lengd','reference','area','long','lat')
+
+# spatial points data frame
+vidmidunarpunktar <- sp::SpatialPointsDataFrame(vpoints.df[,c('long','lat')],
+                                     vpoints.df[,c('id','name','refpoint','breidd','lengd','reference','area')],
+                                     proj4string=PRO)
+@
+
+<<eval=FALSE>>=
+devtools::use_data(vidmidunarpunktar)
+@
+
+<<eval=TRUE>>=
+# do the same thing here as with grunnlina
+p1 <- vidmidunarpunktar[vidmidunarpunktar$area == "main",]
+l1 <- Line(coordinates(p1))
+p1 <- spsample(l1,n=5000,type='regular')
+po1 <- Polygon(coordinates(p1))
+po1 <- Polygons(list(po1), ID=1)
+
+p <- vidmidunarpunktar[vidmidunarpunktar$name == "Kolbeinsey",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p,miles=0.001)
+po2 <- sp@polygons[[1]]
+po2@ID <- "2"
+
+p <- vidmidunarpunktar[vidmidunarpunktar$name == "Hvalbakur",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p,miles=0.001)
+po3 <- sp@polygons[[1]]
+po3@ID <- "3"
+
+p <- vidmidunarpunktar[vidmidunarpunktar$name == "Hvalnes",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p,miles=0.001)
+po4 <- sp@polygons[[1]]
+po4@ID <- "4"
+
+p <- vidmidunarpunktar[vidmidunarpunktar$name == "Surtsey",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p,miles=0.001)
+po5 <- sp@polygons[[1]]
+po5@ID <- "5"
+
+p <- vidmidunarpunktar[vidmidunarpunktar$name == "Geirfugladrangi",]
+p <- SpatialPoints(p,proj4string = PRO)
+sp <- expand_sp(p,miles=0.001)
+po6 <- sp@polygons[[1]]
+po6@ID <- "6"
+
+CP <- as(raster::extent(-19, -17.5, 66.35, 67), "SpatialPolygons")
+proj4string(CP) <- PRO
+#grimsey.sp <- rgeos::gIntersection(biceland, CP, byid=TRUE)
+grimsey.sp <- rgeos::gIntersection(biceland, CP)
+po7 <- spChFIDs(grimsey.sp,"7")
+
+#x <- grimsey.sp@polygons
+# A bit of brute force here:
+#po7 <- Polygons(list(x[[1]]@Polygons[[1]],
+#                     x[[2]]@Polygons[[1]],
+#                     x[[3]]@Polygons[[1]],
+#                     x[[4]]@Polygons[[1]]),ID=7)
+
+# Vestmannaeyjar
+CP <- as(raster::extent(-21, -20, 63, 63.5), "SpatialPolygons")
+proj4string(CP) <- PRO
+po8 <- rgeos::gIntersection(biceland, CP, byid=FALSE)
+po8 <- spChFIDs(po8,"8")
+
+vidmidunarlina <- SpatialPolygons(list(po1,po2,po3,po4,po5,po6),proj4string = PRO)
+
+vidmidunarlina <- rbind(vidmidunarlina,po7)
+vidmidunarlina <- rbind(vidmidunarlina,po8)
+
+df <- data.frame(ID=c(1:8),
+                 name=c("Mainland","Kolbeinsey","Hvalbakur","Hvalnes","Surtsey","Geirfugladrangi","Grímsey","Vestmannaeyjar"),
+                 stringsAsFactors=FALSE)
+Encoding(df$name) <- "UTF-8"
+vidmidunarlina <- SpatialPolygonsDataFrame(vidmidunarlina,df)
+# ---- end of new
+@
+
+<<eval=FALSE>>=
+devtools::use_data(vidmidunarlina)
+@
+
+Heimildir fiskiskipa til veiða með botnvörpu, flotvörpu og dragnót innan fiskveiðilandhelgi Íslands miðast við stærðir skipa og aflvísa þeirra. Er skipum skipt niður í þrjá flokka miðað við stærðir þeirra og aflvísa þannig:
+\begin{enumerate}
+  \item flokkur: Fiskiskip 42 metrar og lengri. Enn fremur öll fiskiskip með aflvísa 2.500 eða hærri.
+  \item flokkur: Fiskiskip lengri en 29 metrar en styttri en 42 metrar með aflvísa lægri en 2.500. Enn fremur fiskiskip styttri en 29 metrar en með aflvísa 1.600 og hærri. Í þennan flokk falla einnig fiskiskip 39 metrar og styttri sem togveiðiheimildir höfðu eftir þeirri viðmiðun skv. 3. gr. laga nr. 81 31. maí 1976, um veiðar í fiskveiðilandhelgi Íslands, enda verði ekki um aukningu á aflvísum þeirra að ræða eftir 1. júní 1997.
+  \item flokkur: Fiskiskip styttri en 29 metrar, enda séu þau með lægri aflvísa en 1.600. Enn fremur fiskiskip 26 metrar og styttri sem togveiðiheimildir höfðu eftir þeirri viðmiðun skv. 3. gr. laga nr. 81 31. maí 1976, um veiðar í fiskveiðilandhelgi Íslands, enda verði ekki um aukningu á aflvísum þeirra að ræða eftir 1. júní 1997.
+\end{enumerate}
+\begin{itemize}
+  \item  Þar sem í lögum þessum er rætt um aflvísi skips er miðað við reiknaðan aflvísi þess. Sé skip búið skrúfuhring er aflvísir þess reiknaður þannig: HÖ x ÞS. Sé skip ekki búið skrúfuhring er aflvísir þess reiknaður þannig: 0,60 x HÖ x ÞS. HÖ merkir hér skráð afl aðalvélar skipsins í hestöflum, ÞS merkir þvermál skrúfu í metrum.
+  \item Samgöngustofa skal halda skrá yfir aflvísa þeirra skipa sem stunda veiðar með botnvörpu, flotvörpu og dragnót og skal sú skrá lögð til grundvallar við ákvörðun veiðiheimilda samkvæmt þessari grein.
+  \item  Þar sem í lögum þessum er rætt um lengd skipa er miðað við mestu lengd þeirra samkvæmt mælingum Samgöngustofu.)
+  \item Botnvarpa og flotvarpa samkvæmt þessari grein merkir fiskivörpur sem notaðar eru til veiða á helstu botnfisktegundum hér við land og tekur ekki til varpna sem notaðar eru til veiða á humri, rækju eða uppsjávarfiskum. Setja skal nánari ákvæði í reglugerð um gerð og útbúnað fiskivarpna og dragnótar.
+  \item Stundi tvö eða fleiri skip veiðar með sömu botnvörpu, flotvörpu eða dragnót skulu heimildir þeirra samkvæmt þessari grein miðast við samanlagða lengd þeirra og samanlagða aflvísa þeirra.
+\end{itemize}
+
+Hér á eftir eru tilgreind þau svæði og tímar þar sem einstökum flokkum fiskiskipa, sbr. 2. mgr. þessarar greinar, er heimilt að stunda veiðar með botnvörpu, flotvörpu og dragnót:
+
+<<milesfromVidmid, eval=TRUE>>=
+i <- vidmidunarlina$name %in% c("Mainland","Kolbeinsey","Grímsey")
+m04.vidmid <- expand_sp(vidmidunarlina[i,],4)
+m06.vidmid <- expand_sp(vidmidunarlina[i,],6)
+m09.vidmid <- expand_sp(vidmidunarlina[i,],9)
+m12.vidmid <- expand_sp(vidmidunarlina[i,],12)
+@
+
+<<milesfromShore, eval=TRUE>>=
+i <- biceland$SHAPE_Area == max(biceland$SHAPE_Area)
+mainland <- biceland[i,]
+m03.shore <- expand_sp(mainland,3)
+m04.shore <- expand_sp(mainland,4)
+m06.shore <- expand_sp(mainland,6)
+@
+
+\newpage{}
+\subsection*{A. Norðurland}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+  \item A.1. Allt árið frá línu réttvísandi norður frá Horni (vms. 1) að línu réttvísandi norðaustur frá Langanesi (vms. 10), utan línu sem dregin er 12 sjómílur utan við viðmiðunarlínu.
+  \item A.2. Allt árið utan línu sem dregin er í 12 sjómílna fjarlægð frá fjörumarki Grímseyjar.
+  \item A.3. Allt árið utan línu sem dregin er í 12 sjómílna fjarlægð frá fjörumarki Kolbeinseyjar (67°08'80 N – 18°40'60 V).
+\end{itemize}
+
+<<tmpPlot_function, eval=TRUE>>=
+tmpPlot <- function(x,xlim,ylim) {
+  if(missing(xlim)) {
+    tmp <- gIntersection(m12.vidmid,x)
+    plot(tmp,border='white',axes=FALSE)
+  } else {
+  plot(iceland,col='white',border='white',
+       xlim=xlim,
+       ylim=ylim,
+       axes=TRUE)
+  }
+  #plot(fiskhelgi$miles3,col=alpha('red',0.2),lwd=0.001,border='red',add=TRUE)
+  #lines(landhelgi.sl,col='red')
+  plot(iceland,add=TRUE,col='grey',lwd=0.5)
+  plot(vidmidunarlina,add=TRUE,border='yellow')
+  text(vidmidunarpunktar,labels=vidmidunarpunktar$id,col='blue')
+  plot(x,col=scales::alpha('green',0.2),border='green',add=TRUE)
+}
+@
+
+
+<<a, eval=TRUE>>=
+vidmidunarlina.df <- vidmidunarpunktar@data
+vidmidunarlina.df$long <- coordinates(vidmidunarpunktar)[,1]
+vidmidunarlina.df$lat <- coordinates(vidmidunarpunktar)[,2]
+
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(1:10),c('long','lat')])
+
+
+xy <- rbind(xy,
+            cbind(geosphere::destPointRhumb(xy[nrow(xy),],b=45,d=300*1872)),
+            cbind(geosphere::destPointRhumb(xy[1,],b=0,d=300*1872)),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),proj4string = PRO)
+a123.sp <- gIntersection(gDifference(eez,m12.vidmid),xy.sp)
+A3 <- A2 <- A1 <- a123.sp
+tmpPlot(a123.sp)
+@
+
+\newpage{}
+\subsection*{Austurland}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+  \item B.1. Allt árið frá línu réttvísandi norðaustur frá Langanesi (vms. 10) að línu réttvísandi austur frá Hvítingum (vms. 19), utan línu sem dregin er 12 sjómílur utan viðmiðunarlínu.
+    \item B.2. Allt árið utan línu sem dregin er í 5 sjómílna fjarlægð frá fjörumarki Hvalbaks (64°35'80 N – 13°16'60 V).
+    \end{itemize}
+
+<<b12, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(10:19),c('long','lat')])
+xy <- rbind(xy,
+            cbind(geosphere::destPointRhumb(xy[nrow(xy),],b=90,d=300*1870)),
+            cbind(geosphere::destPointRhumb(xy[1,],b=45,d=300*1870)),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+
+i <- vidmidunarlina$name %in% "Hvalbakur"
+m05.hvalbakur <- expand_sp(vidmidunarlina[i,],5)
+tmp <- gUnion(m12.vidmid,m05.hvalbakur)
+b12.sp <- gIntersection(gDifference(eez,tmp),xy.sp)
+tmpPlot(b12.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Flokkar 2 og 3:}}
+\begin{itemize}
+  \item B.3. Allt árið utan línu sem dregin er 6 sjómílur utan viðmiðunarlínu milli lína réttvísandi norðaustur frá Langanesi (vms. 10) og réttvísandi austur frá Glettinganesi (vms. 13).
+\end{itemize}
+<<b3, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(10:13),c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=90,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=45,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m06.vidmid)
+b3.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(b3.sp)
+@
+
+<<B, eval=TRUE>>=
+B1 <- b12.sp
+B2 <- gUnion(b12.sp,b3.sp)
+B3 <- B2
+@
+
+
+\newpage{}
+\subsection*{C. Suðausturland}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+  \item C.1. Allt árið frá línu réttvísandi austur frá Hvítingum (vms. 19) að línu réttvísandi suður frá Lundadrangi (vms. 28), utan línu sem dregin er 12 sjómílur utan viðmiðunarlínu.
+
+<<c1, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(19:28),c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=90,d=300*1870),
+            xy[1,])
+c1.p <- Polygon(xy)
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m12.vidmid)
+c1.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c1.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+\item C.2. Tímabilið 1. maí – 31. desember frá línu réttvísandi austur frá Hvítingum (vms. 19) að línu réttvísandi suður frá Hvalnesi (64°24'10 N – 14°32'50 V), utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu.
+
+<<c2, eval=TRUE>>=
+xy <- rbind(as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(19),c('long','lat')]),
+            cbind(-geo_convert(143250),geo_convert(642410)))
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=90,d=300*1870),
+            xy[1,])
+c2.p <- Polygon(xy)
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m04.vidmid)
+c2.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c2.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+\item C.3. Tímabilið 1. maí – 31. janúar á svæði milli lína réttvísandi austur frá Hvítingum (vms. 19) og réttvísandi suður frá Ingólfshöfða (vms. 22), utan línu sem dregin er 9 sjómílur utan viðmiðunarlínu.
+
+<<c3, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(19:22),c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=90,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m09.vidmid)
+c3.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c3.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+\item C.4. Tímabilið 15. september – 31. janúar á svæði milli lína réttvísandi suður frá Ingólfshöfða (vms. 22) og réttvísandi suður frá Lundadrangi (vms. 28), utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu.
+
+<<c4, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(22:28),c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m04.vidmid)
+c4.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c4.sp)
+@
+\newpage{}
+\subsubsection*{Flokkar 2 og 3:}
+\item C.5. Allt árið utan línu sem dregin er í 4 sjómílna fjarlægð frá fjörumarki meginlandsins frá línu austur frá Hvítingum (vms. 19) að 18°00'00 V.
+     Á svæði milli línu sem dregin er réttvísandi [suður frá Stokksnesi (vms. 20)]1) og að 15°45'00 V er þó ekki heimilt að stunda veiðar innan 6 sjómílna frá landi tímabilið 1. maí – 30. september.
+ <<c5, eval=TRUE>>=
+x1 <- -18
+x2 <- -5
+y1 <- 60
+y2 <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(19),c('long','lat')])[,2]
+xy <- cbind(c(x1,x2,x2,x1,x1),c(y1,y1,y2,y2,y1))
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m04.shore)
+c5.sp <- gIntersection(tmp,xy.sp)
+
+x1 <- -geo_convert(154500)
+x2 <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(20),c('long','lat')])[,1]
+y1 <- 60
+y2 <- 65
+xy <- cbind(c(x1,x2,x2,x1,x1),c(y1,y1,y2,y2,y1))
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m06.shore)
+c5a.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c5.sp)
+plot(c5a.sp,col=scales::alpha('green',0.2),border='green',add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{Flokkur 3:}
+  \item C.6. Allt árið utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu frá 18°00'00 V að línu réttvísandi suður frá Lundadrangi (vms. 28).
+<<c6, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(26:28),c('long','lat')])
+xy <- rbind(cbind(c(-18),c(63.45)),xy)
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m04.vidmid)
+c6.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c6.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Flokkur 3:}}
+\item C.7. Allt árið utan línu sem dregin er í 3 sjómílna fjarlægð frá fjörumarki meginlandsins frá línu réttvísandi austur frá Hvítingum (vms. 19) að 18°00'00 V.
+<<c7, eval=TRUE>>=
+x1 <- -18
+x2 <- -5
+y1 <- 60
+y2 <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(19),c('long','lat')])[,2]
+xy <- cbind(c(x1,x2,x2,x1,x1),c(y1,y1,y2,y2,y1))
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m03.shore)
+c7.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c7.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Flokkur 3:}}
+\item C.8. Allt árið utan línu sem dregin er í 3 sjómílna fjarlægð frá fjörumarki meginlandsins frá 18°00'00 V að línu réttvísandi suður af Lundadrangi (vms. 28).
+\end{itemize}
+<<c8, eval=TRUE>>=
+x1 <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28),c('long','lat')])[,1]
+x2 <- -18
+y1 <- 60
+y2 <- 65
+xy <- cbind(c(x1,x2,x2,x1,x1),c(y1,y1,y2,y2,y1))
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m03.shore)
+c8.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(c8.sp)
+@
+
+<<C1, eval=TRUE>>=
+C1 <- gUnion(c1.sp,c2.sp)
+C1 <- gUnion(C1,c3.sp)
+C1 <- gUnion(C1,c4.sp)
+@
+
+<<C2, eval=TRUE>>=
+C2 <- gUnion(C1,c5.sp)
+C2 <- gUnion(C2,c6.sp)
+@
+
+<<C3, eval=TRUE>>=
+C3 <- gUnion(C2,c7.sp)
+C3 <- gUnion(C3,c8.sp)
+@
+
+\newpage{}
+\subsection*{\emph{D. Suðurland} - Southcoast}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+\item D.1. Allt árið utan línu sem dregin er úr punkti í 12 sjómílna fjarlægð réttvísandi suður frá Lundadrangi (vms. 28) í punkt 63°08'00 N – 19°57'00 V og þaðan í 4 sjómílna fjarlægð réttvísandi suður frá Surtsey.
+<<d1, eval=TRUE>>=
+surtsey <- cbind(-geo_convert(203630),geo_convert(631760))
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28),c('long','lat')])
+xy <- rbind(geosphere::destPointRhumb(xy,b=180,d=12*1870),
+            cbind(-geo_convert(195700),geo_convert(630800)),
+            geosphere::destPointRhumb(surtsey,b=180,d=4*1870),
+            geosphere::destPointRhumb(surtsey,b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870))
+xy <- rbind(xy,xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+d1.sp <- xy.sp
+d1.sp <- gIntersection(eez,d1.sp)
+tmpPlot(d1.sp,
+        xlim=c(min(xy[,1]),max(xy[,1])),
+        ylim=c(63,64))
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+\item D.2. Allt árið utan línu sem dregin er úr punkti í 4 sjómílna fjarlægð réttvísandi suður frá Surtsey í punkt í 5 sjómílna fjarlægð réttvísandi suður frá Geirfugladrangi (63°40'7 N–23°17'1 V).
+<<d2, eval=TRUE>>=
+geirfugladrangi <- cbind(-geo_convert(231710),geo_convert(634070))
+xy <- rbind(geosphere::destPointRhumb(surtsey,b=180,d=4*1870),
+            geosphere::destPointRhumb(geirfugladrangi,b=180,d=5*1870))
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+d2.sp <- xy.sp
+d2.sp <- gIntersection(eez,d2.sp)
+tmpPlot(d2.sp,xlim=c(min(xy[,1]),max(xy[,1])),
+        ylim=c(63,64))
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+\item D.3. Tímabilið 1. ágúst – 31. desember utan línu sem dregin er úr punkti í 4 sjómílna fjarlægð réttvísandi suður frá Lundadrangi (vms. 28) í punkt í 4 sjómílna fjarlægð réttvísandi suður frá Surtsey.
+<<d3, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28),c('long','lat')])
+xy <- rbind(geosphere::destPointRhumb(xy,b=180,d=4*1870),
+            geosphere::destPointRhumb(surtsey,b=180,d=4*1870))
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m03.shore)
+d3.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(d3.sp,xlim=c(min(xy[,1]),max(xy[,1])),
+        ylim=c(63,64))
+@
+\newpage{}
+\subsubsection*{\emph{Flokkar 2 og 3:}}
+\item D.4. Allt árið utan línu sem dregin er úr punkti í 4 sjómílna fjarlægð réttvísandi suður frá Lundadrangi (vms. 28) í punkt í 4 sjómílna fjarlægð réttvísandi suður frá Surtsey.
+<<d4, eval=TRUE>>=
+xy <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28),c('long','lat')])
+xy <- rbind(geosphere::destPointRhumb(xy,b=180,d=4*1870),
+            geosphere::destPointRhumb(surtsey,b=180,d=4*1870))
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=180,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m04.shore)
+d4.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(d4.sp,xlim=c(min(xy[,1]),max(xy[,1])),
+        ylim=c(63,64))
+@
+\newpage{}
+\subsubsection*{\emph{Flokkar 2 og 3:}}
+\item D.5. Tímabilið 16. maí – 31. desember utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu frá línu réttvísandi suður úr Lundadrangi (vms. 28) að línu [réttvísandi suðvestur frá Reykjanesaukavita (vms. 34)].
+
+<<d5, eval=TRUE>>=
+xy <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28:34),])[,c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=225,d=300*1870),
+            geosphere::destPointRhumb(xy[1,],b=180,d=300*1870),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+x <- gDifference(eez,m04.vidmid)
+d5.sp <- gIntersection(x,xy.sp)
+tmpPlot(d5.sp)
+@
+\newpage{}
+\subsubsection*{\emph{Flokkur 3:}}
+\item D.6. Allt árið utan línu sem dregin er í 3 sjómílna fjarlægð frá fjörumarki meginlandsins frá línu réttvísandi suður frá Lundadrangi (vms. 28) að línu réttvísandi suðvestur frá Reykjanesaukavita.
+<<d6, eval=TRUE>>=
+xyNW <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(34),c('long','lat')])
+xySW <- geosphere::destPointRhumb(xyNW,b=225,d=300*1852)
+xyNE <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(28),c('long','lat')])
+xySE <- geosphere::destPointRhumb(xyNE,b=180,d=300*1852)
+xy <- rbind(xySW,xySE,xyNE,cbind(-21,64),xyNW,xySW)
+
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m03.shore)
+d6.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(d6.sp)
+@
+
+<<D1, eval=TRUE>>=
+D1 <- gUnion(d1.sp,d2.sp)
+D1 <- gUnion(D1,d3.sp)
+D2 <- gUnion(D1,d4.sp)
+D2 <- gUnion(D2,d5.sp)
+D3 <- gUnion(D2,d6.sp)
+@
+\end{itemize}
+
+
+\newpage{}
+\subsection*{E. Reykjanes- og Faxaflóasvæði}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+  \item Allt árið úr punkti í 5 sjómílna fjarlægð réttvísandi suður frá Geirfugladrangi og utan línu í 5 sjómílna fjarlægð frá Geirfugladrangi í punkt 64°43'70 N–24°12'00 V.
+
+<<e1, eval=TRUE>>=
+i <- vidmidunarpunktar$name %in% "Geirfugladrangi"
+pt <- cbind(-geo_convert(241200),geo_convert(644370))
+pt2 <- geosphere::destPointRhumb(vidmidunarpunktar[i,],b=180,d=5)
+xy <- rbind(pt2,
+            pt,
+            geosphere::destPointRhumb(pt,b=270,d= 300 * 1852),
+            geosphere::destPointRhumb(pt2,b=180, d = 300 * 1852),
+            pt2)
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+
+i <- vidmidunarpunktar$name %in% "Geirfugladrangi"
+m05.geirfugladrangi <- expand_sp(vidmidunarpunktar[i,],5)
+x <- gDifference(xy.sp,m05.geirfugladrangi)
+e1.sp <- gIntersection(eez,x)
+tmpPlot(e1.sp,xlim=c(-25,-22),ylim=c(63,65))
+@
+\newpage{}
+\subsubsection*{\emph{Allir flokkar:}}
+  \item E.2. Tímabilið 1. nóvember – 31. desember utan línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu á svæði sem að sunnan markast af línu dreginni réttvísandi suður frá Reykjanesaukavita (vms. 34) og að vestan af línu sem dregin er réttvísandi vestur frá Reykjanesaukavita.
+<<e2, eval=TRUE>>=
+xy <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(34),])[,c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy,b=270,d=300*1872),
+            geosphere::destPointRhumb(xy,b=180,d=300*1872),
+            xy)
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+x <- gDifference(eez,m12.vidmid)
+e2.sp <- gIntersection(x,xy.sp)
+tmpPlot(e2.sp,xlim=c(-25,-22),ylim=c(63,65))
+@
+\newpage{}
+\subsubsection*{\emph{Flokkar 2 og 3:}}
+  \item E.3. Allt árið utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu frá línu réttvísandi suðvestur frá Reykjanesaukavita (vms. 34) að línu réttvísandi vestur frá Malarrifi (vms. 38).
+<<e3, eval=TRUE>>=
+xy <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(34:38),])[,c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=270,d=300*1872),
+            geosphere::destPointRhumb(xy[1,],b=225,d=300*1872),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+x <- gDifference(eez,m04.vidmid)
+e3.sp <- gIntersection(x,xy.sp)
+tmpPlot(e3.sp)
+
+E1 <- gUnion(e1.sp,e2.sp)
+E2 <- gUnion(E1,e3.sp)
+E3 <- E2
+@
+\newpage{}
+\subsection*{\emph{F. Breiðafjörður} - Breiðafjörður}
+\subsubsection*{\emph{Allir flokkar:}}
+\item F.1. Allt árið utan línu sem dregin er frá punkti 64°43'70 N – 24°12'00 V í punkt 64°43'70 N – 24°26'00 V og þaðan í punkt í 12 sjómílna fjarlægð réttvísandi vestur frá Bjargtöngum (vms. 43).
+<<f1, eval=TRUE>>=
+xy <- cbind(-geo_convert(242600),geo_convert(644370))
+xy2 <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(43),])[,c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy2,b=270,d=12*1872),
+            geosphere::destPointRhumb(xy2,b=270,d=300*1872),
+            geosphere::destPointRhumb(xy[1,],b=270,d=300*1872))
+xy <- rbind(xy,xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+tmp <- gDifference(eez,m03.shore)
+f1.sp <- gIntersection(tmp,xy.sp)
+tmpPlot(f1.sp,xlim=c(-26,max(xy[,1])),ylim=c(min(xy[,2]),max(xy[,2])))
+
+@
+\end{itemize}
+
+
+\newpage{}
+\subsubsection*{\emph{Flokkar 2 og 3:}}
+\begin{itemize}
+  \item F.2. Tímabilið 1. júní – 31. desember utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu frá línu réttvísandi vestur frá Malarrifi (vms. 38) að línu réttvísandi vestur frá Skálasnaga (vms. 40) og þaðan í punkt í 4 sjómílna fjarlægð réttvísandi vestur frá Bjargtöngum (vms. 43).
+\end{itemize}
+<<f2, eval=TRUE>>=
+xy1 <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(38:40),])[,c('long','lat')])
+xy1 <- rbind(xy1,
+             geosphere::destPointRhumb(xy1[nrow(xy1),],b=270,d=300*1872),
+             geosphere::destPointRhumb(xy1[1,],b=270,d=300*1872),
+             xy1[1,])
+xy1.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy1)),ID='xy')),
+                          proj4string = PRO)
+x <- gDifference(eez,m04.shore)
+xy1.sp <- gIntersection(x,xy1.sp)
+
+xy2 <- as.matrix(vidmidunarlina.df[vidmidunarlina.df$id %in% c(40,43),c('long','lat')])
+xy2 <- geosphere::destPointRhumb(xy2,b=270,d=4*1872)
+xy2 <- rbind(xy2,
+             geosphere::destPointRhumb(xy2[nrow(xy2),],b=270,d=300*1872),
+             geosphere::destPointRhumb(xy2[1,],b=270,d=300*1872),
+             xy2[1,])
+xy2.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy2)),ID='xy')),
+                          proj4string = PRO)
+xy.sp <- gUnion(xy1.sp,xy2.sp)
+f2.sp <- gIntersection(x,xy.sp)
+tmpPlot(f2.sp)
+@
+
+\newpage{}
+\subsubsection*{\emph{Flokkur 3:}}
+\begin{itemize}
+\item F.3. Tímabilið 1. janúar – 31. maí utan línu sem dregin er 4 sjómílur utan viðmiðunarlínu frá línu [réttvísandi vestur frá Malarrifi]1) (vms. 38) að línu réttvísandi vestur frá Skálasnaga (vms. 40) og þaðan í punkt í 4 sjómílna fjarlægð réttvísandi vestur frá Bjargtöngum (vms. 43).
+\end{itemize}
+<<f3, eval=TRUE>>=
+f3.sp <- f2.sp
+tmpPlot(f3.sp)
+@
+
+\newpage{}
+\subsubsection*{\emph{Flokkur 3:}}
+\begin{itemize}
+\item F.4. Tímabilið 1. september – 31. desember utan línu sem dregin er 4 sjómílur utan við viðmiðunarlínu á Snæfellsnesi, norðan við línu réttvísandi vestur frá Malarrifi (vms. 38) og utan við viðmiðunarlínu milli Öndverðarnesvita (vms. 41) og Skorarvita (vms. 42). Að norðan markast svæði þetta af 65°16'00 N.
+\end{itemize}
+<<f4, eval=TRUE>>=
+xy1 <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(38:41),])[,c('long','lat')])
+xy1 <- rbind(xy1,xy1[1,])
+xy1.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy1)),ID='xy')),
+                          proj4string = PRO)
+xy1.sp <- expand_sp(xy1.sp,4)
+# utan við viðmiðunarlínu milli 41 og 42:
+xy2 <- as.matrix(data.frame(vidmidunarlina.df[vidmidunarlina.df$id %in% c(38,41,42),])[,c('long','lat')])
+xy2a <- rbind(xy2,
+              geosphere::destPointRhumb(xy2[nrow(xy2),],b=270,d=300*1872),
+              geosphere::destPointRhumb(xy2[1,],b=270,d=300*1872),
+              xy2[1,])
+xy2a.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy2a)),ID='xy')),
+                           proj4string = PRO)
+tmp <- gIntersection(xy1.sp,xy2a.sp)
+tmp2 <- gDifference(xy2a.sp,tmp)
+# Að norðan markast svæði þetta af 65°16'00 N
+x <- c(-40,-23,-23,-40,-40)
+y <- c( 64, 64, geo_convert(651600), geo_convert(651600), 64)
+xy <- cbind(x,y)
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+
+f4.sp <- gIntersection(xy.sp,tmp2)
+f4.sp <- gIntersection(eez,f4.sp)
+tmpPlot(f4.sp)
+
+F1 <- f1.sp
+F2 <- gUnion(F1,f2.sp)
+F3 <- gUnion(F2,f3.sp)
+F3 <- gUnion(F3,f4.sp)
+@
+
+\newpage{}
+\subsection*{\emph{G. Vestfirðir} - Northwestern region}
+\subsubsection*{\emph{Allir flokkar:}}
+\begin{itemize}
+\item Allt árið frá línu réttvísandi vestur frá Bjargtöngum (vms. 43) að línu réttvísandi norður frá Horni (vms. 48), utan línu sem dregin er 12 sjómílur utan viðmiðunarlínu.
+\end{itemize}
+
+<<g1, eval=TRUE>>=
+# select the points in question
+g1.df <- vidmidunarlina.df[vidmidunarlina.df$id %in% c(43:48),]
+g1.df <- rbind(g1.df,vidmidunarlina.df[1,])
+# create a polygon that extents the boundary
+xy <- as.matrix(g1.df[,c('long','lat')])
+xy <- rbind(xy,
+            geosphere::destPointRhumb(xy[nrow(xy),],b=0,d=400*1.87*1000,),
+            geosphere::destPointRhumb(xy[1,],b=270,d=400*1.87*1000),
+            xy[1,])
+xy.sp <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+x <- gDifference(eez,m12.vidmid)
+g1.sp <- gIntersection(x,xy.sp)
+tmpPlot(g1.sp)
+
+G3 <- G2 <- G1 <- g1.sp
+@
+
+\newpage{}
+<<eval=FALSE>>=
+x1 <- gUnion(A1,B1)
+x1 <- gUnion(x1,C1)
+x1 <- gUnion(x1,D1)
+x1 <- gUnion(x1,E1)
+x1 <- gUnion(x1,F1)
+skipaflokkur1 <- gUnion(x1,G1)
+
+
+x2 <- gUnion(A2,B2)
+x2 <- gUnion(x2,C2)
+x2 <- gUnion(x2,D2)
+x2 <- gUnion(x2,E2)
+x2 <- gUnion(x2,F2)
+skipaflokkur2 <- gUnion(x2,G2)
+
+x3 <- gUnion(A3,B3)
+x3 <- gUnion(x3,C3)
+x3 <- gUnion(x3,D3)
+x3 <- gUnion(x3,E3)
+x3 <- gUnion(x3,F3)
+skipaflokkur3 <- gUnion(x3,G3)
+@
+
+<<BoatClassStuff_save, eval=FALSE>>=
+devtools::use_data(skipaflokkur1, skipaflokkur2, skipaflokkur3, overwrite=TRUE)
+@
+
+\begin{figure}[H]
+<<eval=TRUE>>=
+sp::plot(iceland, col="grey90")
+sp::plot(skipaflokkur3,col=scales::alpha('red',0.1),border="red",add=TRUE)
+sp::plot(skipaflokkur2,col=scales::alpha('red',0.3),border="blue",add=TRUE)
+sp::plot(skipaflokkur1,col=scales::alpha('red',0.3),border="green",add=TRUE)
+@
+\caption{Heimild um veiðar skv. skipaflokkum. Skipaflokkur 1, 2 og 3 eru sýndir með mis-skyggðum rauðum flákum. Nær eingöngu til svæða sem eru lokuð allt árið.}
+\label{fig:skipaflokkar}
+\end{figure}
+
+
+<<lastStuff, eval=FALSE>>=
+XX <- list(a123=a123.sp,
+           b12=b12.sp,
+           b3=b3.sp,
+           c1=c1.sp,
+           c2=c2.sp,
+           c3=c3.sp,
+           c4=c4.sp,
+           c5=c5.sp,
+           c5a=c5a.sp,
+           c6=c6.sp,
+           c7=c7.sp,
+           c8=c8.sp,
+           d1=d1.sp,
+           d2=d2.sp,
+           d3=d3.sp,
+           d4=d4.sp,
+           d5=d5.sp,
+           d6=d6.sp,
+           e1=e1.sp,
+           e2=e2.sp,
+           e3=e3.sp,
+           f1=f1.sp,
+           f2=f2.sp,
+           f3=f3.sp,
+           f4=f4.sp,
+           g1=g1.sp)
+t1 <- 'all year'
+t2 <- 'seasonal'
+d <- data.frame(ID=as.character(c(1:length(XX))),
+                name=c('a123',
+                       'b12','b13',
+                       'c1','c2','c3','c4','c5','c5a','c6','c7','c8',
+                       paste('d',c(1:6),sep=''),
+                       'e1','e2','e3',
+                       paste('f',c(1:4),sep=''),
+                       'g1'),
+                type=c(t1,
+                       t1,t1,
+                       t1,t2,t2,t2,t1,t2,t1,t1,t1,
+                       t1,t1,t2,t1,t2,t1,
+                       t1,t2,t1,
+                       t1,t2,t2,t2,
+                       t1))
+X <- list()
+
+tmpMake <- function(x,ID) {
+  x <- fortify(x)
+  x$group <- as.character(x$group)
+  y <- list()
+  Groups <- unique(x$group)
+  for (i in 1:length(Groups)) {
+    x1 <- x[x$group %in% Groups[i],]
+    x1 <- rbind(x1,x1[1,])
+    x1 <- Polygon(x1[,c('long','lat')])
+    y[[i]] <- x1
+  }
+  x <- Polygons(y,ID=ID)
+  return(x)
+  }
+
+for (i in 1:length(XX)) {
+  tmp <- XX[[i]]
+  X[[i]] <- tmpMake(tmp,ID=d$ID[i])
+}
+
+X <- SpatialPolygons(X,proj4string=PRO)
+X <- SpatialPolygonsDataFrame(X,data=d)
+plot(X,col=alpha('red',0.2))
+plot(iceland,col='grey',add=TRUE)
+
+
+x <- X[str_sub(X$name,1,1) == 'c',]
+plot(x)
+plot(iceland,add=TRUE)
+x <- X[X$name == 'b13',]
+plot(x)
+
+x <- X[X$type == 'all year',]
+plot(x,col=alpha('red',0.2))
+y <- X[X$type == 'seasonal',]
+plot(y,col=alpha('green',0.2),add=TRUE)
+plot(iceland,add=TRUE,col='grey')
+
+require(plotKML)
+kml_open('test2.kml')
+kml_layer(X,colour='red',alpha=0.1)
+kml_close('test2.kml')
+@
+
+Depth lines:
+<<>>=
+require(geo)
+require(dplyr)
+
+make_spatiallines <- function(d,id.name) {
+  d <- d[,c("lon","lat")]
+  names(d) <- c("x","y")
+  d$id <- cumsum(is.na(d$x)) + 1
+  d <- filter(d,x >= -30 & x <= -10 & y >= 62.25 & y <= 67.75)
+  d <- d[!is.na(d$x),]
+  ids <- unique(d$id)
+  line.list <- list()
+  for (i in 1:length(ids)) {
+    line.list[[i]] <- Line(d[d$id == ids[i],c("x","y")])
+  }
+  d.lines <- Lines(line.list,ID=id.name)
+  d.sl <- SpatialLines(list(d.lines),proj4string=PRO)
+  return(d.sl)
+}
+
+d1000 <- make_spatiallines(gbdypi.1000,"1000 m")
+d500  <- make_spatiallines(gbdypi.500,"500 m")
+d400  <- make_spatiallines(gbdypi.400,"400 m")
+d200  <- make_spatiallines(gbdypi.200,"200 m")
+
+#x <- SpatialLinesDataFrame(d1000, data.frame(ID="1000m"), match.ID = TRUE)
+
+save(d1000,d500,d400,d200,file="data/depth.rda")
+@
+
+
+\end{document}

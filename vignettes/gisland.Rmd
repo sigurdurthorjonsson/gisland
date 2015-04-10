@@ -1,0 +1,72 @@
+---
+title: "gisland"
+author: "Einar Hjörleifsson"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    css: my.css
+vignette: >
+  %\VignetteIndexEntry{gisland}
+  %\VignetteEngine{knitr::rmarkdown} 
+  \usepackage[utf8]{inputenc}
+---
+
+## Preamble
+
+This package is in it's infant stage.
+
+The `gisland`-package is primarily a collection of various spatial legal and regulatory data objects relevant to Icelandic EEZ management area. And then some ... 
+
+The focus of the package was to make available spatial object library that can be used in consequent analysis within the R environment.
+
+All data-objects are in one or the other `spatial*`-formats of `sp`-package.
+
+The package may also contain various functions that may or may not be of usage. 
+
+```{r, message=FALSE}
+require(knitr)
+require(gisland)
+```
+
+## Objects
+
+```{r}
+sp::plot(landhelgi,col="grey90")
+sp::plot(grunnlina, border="red", add=TRUE)
+sp::plot(grunnpunktar, col="red", add=TRUE)
+```
+
+```{r, message=FALSE}
+i <- iceland$SHAPE_Area == max(iceland$SHAPE_Area)
+mainland <- iceland[i,]
+require(rgdal)
+m12.shore <- expand_sp(mainland,12)
+m12.shore <- rgeos::gDifference(m12.shore,mainland)
+sp::plot(landhelgi, col="grey90")
+sp::plot(m12.shore, col=scales::alpha("red",0.2), 
+         border=scales::alpha("red",0.2), add=TRUE)
+```
+
+
+```{r}
+sp::plot(eez,col="grey90")
+```
+
+```{r}
+i <-  is.na(reglugerdir$dags_til) & reglugerdir$type %in% c("permanent","kórall")
+plot(reglugerdir[i,], col="red")
+plot(iceland,add=T,col="grey90")
+```
+
+
+Skv. [Lögum um veiðar í fiskveiðilandhelgi Íslands](http://www.althingi.is/altext/stjt/1997.079.html)
+miðast heimildir fiskiskipa til veiða með botnvörpu, flotvörpu og dragnót innan 
+fiskveiðilandhelgi Íslands við stærðir skipa og aflvísa þeirra:
+
+```{r}
+sp::plot(iceland, col="grey90")
+sp::plot(skipaflokkur3,col=scales::alpha('red',0.1),border="red",add=TRUE)
+sp::plot(skipaflokkur2,col=scales::alpha('red',0.3),border="blue",add=TRUE)
+sp::plot(skipaflokkur1,col=scales::alpha('red',0.3),border="green",add=TRUE)
+```
+

@@ -1,0 +1,755 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{amstext}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[pdftex]{hyperref}
+
+\begin{document}
+
+\title{Reglugerðir um veidar}
+\author{Einar Hjörleifsson}
+\maketitle
+
+
+<<setup, echo=FALSE, message=FALSE>>=
+opts_chunk$set(warning=FALSE,
+               message=FALSE,
+               fig.align='center',
+               fig.path='figure/reglugerdir/',
+               fig.width=5,
+               fig.height=5,
+               tidy=TRUE,
+               tidy.opts=list(width.cutoff=55),
+               pretty=FALSE,
+               echo=FALSE,
+               eval=TRUE)
+require(sp)
+require(rgeos)
+require(xtable)
+require(gisland)
+@
+
+\newpage{}
+<<sessionInfo, results='asis', echo=FALSE, eval=FALSE>>=
+devtools::session_info()
+@
+
+This is a rudimentary draft text.
+
+<<x, comment='', echo=FALSE>>=
+print(paste('This document was created in knitr',lubridate::now()))
+@
+
+\newpage{}
+\section*{Preamble}
+
+<<some_constants>>=
+cn <- c("id","type","year","nr","grein","tolulidur","undirlidur","heiti","dags_fra",
+                "dags_til","v1","v2","v3","v6","v7","v8","v9","v14")
+@
+
+<<some_function>>=
+prettyCoords <- function(dat) {
+  x <- dat[,1]
+  x <- paste(stringr::str_sub(x,1,2),"°",stringr::str_sub(x,3,4),"'",stringr::str_sub(x,5,6)," N",sep="")
+  dat[,1] <- x
+  y <- dat[,2]
+  y <- paste(stringr::str_sub(y,1,2),"°",stringr::str_sub(y,3,4),"'",stringr::str_sub(y,5,6)," W",sep="")
+  dat[,2] <- y
+  names(dat) <- c("Breidd","Lengd")
+  row.names(dat) <- 1:nrow(dat)
+  return(dat)
+}
+
+df_to_sp <- function(x,id) {
+  x$lon <- -geo_convert(x$lengd)
+  x$lat <-  geo_convert(x$breidd)
+  x <- rbind(x,x[1,])
+  x <- sp::Polygon(x[,c('lon','lat')],hole=FALSE)
+  x <- sp::Polygons(list(x),ID=as.character(id))
+  return(x)
+}
+
+sp_to_spdf <- function(reglugerdir,datDF,PRO) {
+  tmpSP <- sp::SpatialPolygons(reglugerdir,proj4string = PRO)
+  row.names(datDF) <- 1:nrow(datDF)
+  tmp.spdf <- sp::SpatialPolygonsDataFrame(tmpSP,data=datDF)
+}
+pck.path <- path.package("gisland")
+
+reglugerdir <- list()
+@
+
+
+\section*{Reglugerðir um takmörkun veiða}
+
+Read in all the data on reglugerdir:
+<<read_all_reglugerdir>>=
+Files <- dir(paste(pck.path,"extdata",sep="/"),pattern="*.csv")
+for (i in 1:length(Files)) {
+  if(i == 1) {
+    dat <- read.table(paste(pck.path,"extdata",Files[i],sep="/"),header=TRUE, sep=",",encoding="UTF-8")
+  } else {
+  dat <- rbind(dat,read.table(paste(pck.path,"extdata",Files[i],sep="/"),header=TRUE,sep=",",encoding="UTF-8"))
+  }
+}
+dat$heiti <- iconv(dat$heiti,"UTF-8","UTF-8")
+dat$dags_fra <- as.Date(dat$dags_fra)
+dat$dags_til <- as.Date(dat$dags_til)
+dat$ID <- paste(dat$year,dat$nr,dat$grein,dat$tolulidur,dat$undirlidur,sep="_")
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/a5afb93a22d9571900256cc40055cb31?OpenDocument}{2003\_0068 Reglugerð um bann við veiðum með línu og fiskibotnvörpu á Sléttugrunni.}}
+
+1. gr. Frá og með 7. febrúar 2003 eru allar veiðar með línu og fiskibotnvörpu óheimilar á Sléttugrunni, á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2003_0068, results='asis'>>=
+year <- 2003
+nr <- 68
+
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+print(xtable(prettyCoords(x[,c("breidd","lengd")])), scalebox=1.00)
+
+reglugerdir[[1]] <- df_to_sp(x,1)
+datDF <- x[1,cn]
+
+# temporary plot
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+sp::plot(tmp.spdf[i,],col="red", xlim = c(-18,-16), ylim = c(66, 67.5))
+sp::plot(landhelgi,add=TRUE)
+sp::plot(iceland,col="grey",add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/255d64822a6fa20900256e4e005b0cd2?OpenDocument}{2004\_0202 Reglugerð um um friðun blálöngu á hrygningartíma.}}
+
+1. gr. Á tímabilinu 15. febrúar til 30. apríl eru allar veiðar með fiskibotnvörpu og línu óheimilar á eftirgreindum svæðum:
+
+1.  Suður af Vestmannaeyjum:
+<<r2004_0202, results='asis'>>=
+# File <- paste(pck.path,"extdata/Reglugerd_2004_0202.csv",sep="/")
+year <- 2004
+nr <- 202
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+2.  Á Franshól:
+<<r2004_0202b, results='asis'>>=
+id <- 2
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+Suðurmörk svæðisins afmarkast af 200 sjómílna fiskveiðilandhelgi Íslands.
+
+<<r2004_0202c>>=
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+sp::plot(tmp.spdf[i,],col="yellow")
+sp::plot(iceland,col="grey",add=TRUE)
+sp::plot(eez,add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/2c53bb48f07a3c5f002570eb0052a6d0?OpenDocument}{2005\_1140 Reglugerð um verndun kóralsvæða við suðurströndina.}}
+
+<<2005_1140>>=
+year <- 2005
+nr <- 1140
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+@
+
+1. gr.
+Frá og með 1. janúar 2006 eru allar veiðar nema veiðar á uppsjávarfiski með flotvörpu og hringnót bannaðar á eftirgreindum svæðum:
+
+A. Við Hornafjarðardjúp á svæðum, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2005_1140_A,results='asis'>>=
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+id <- 2
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+B. Í Skaftárdjúpi á svæðum, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2005_1140_B,results='asis'>>=
+id <- 3
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+id <- 4
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+\newpage{}
+C. Út af Reynisdjúpi á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2005_1140_C,results='asis'>>=
+id <- 5
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+
+<<r2005_1140_SP>>=
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+sp::plot(tmp.spdf[i,],col="red")
+sp::plot(iceland,col="grey",add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://stjornartidindi.is/Advert.aspx?ID=611b81d2-d439-4c98-a21e-23b8bb9abcf8}{2006\_0050 AUGLÝSING um friðland í Surtsey..}}
+
+8. gr.: Veiði og notkun skotvopna.
+Veiðar með veiðarfærum sem dregin eru eftir botni svo sem botnvörpu, dragnót og plóg
+eru óheimilar í friðlandinu, innan svæðis sem afmarkast af eftirfarandi punktum:
+<<results='asis'>>=
+year <- 2006
+nr <- 50
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+
+<<>>=
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+sp::plot(tmp.spdf[i,],col="red")
+sp::plot(iceland,col="grey",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/997fd68542e3d6550025720a0049d17d?OpenDocument}{2006\_861 Reglugerð um bann við veiðum með fiskibotnvörpu norðvestur af Heimaey.}}
+
+1. gr. Frá og með 18. október 2006 eru allar veiðar með fiskibotnvörpu óheimilar á svæði norðvestur af Heimaey, sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2006_0861, results='asis'>>=
+year <- 2006
+nr <- 861
+id <- 1
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+# temporary plot
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+plot(tmp.spdf[i,],col="red")
+plot(iceland,col="grey",add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/2d8cdab9a540c73600256a0d0055eeb1/24d05c44a983604e002572c30030a382?OpenDocument}{2007\_0310 REGLUGERÐ um friðunarsvæði við Ísland}}
+
+<<r2007_0310a, echo=FALSE>>=
+year <- 2007
+nr <- 310
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+@
+
+I. Bann við togveiðum.
+
+1. gr. Veiðar með fiskibotn- og flotvörpu eru bannaðar á eftirgreindum svæðum:
+
+1. Fyrir Vesturlandi á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+
+<<2007_0310_1, results='asis'>>=
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+@
+
+<<>>=
+# Make a polygon for area closed all year
+tmp <- x[x$id %in% c(1:3),]
+tmp$x <- -geo_convert(tmp$lengd)
+tmp$y <-  geo_convert(tmp$breidd)
+id <- 1
+x1 <- df_to_sp(tmp[tmp$id == id,],1)
+x1 <- SpatialPolygons(list(x1),proj4string=PRO)
+id <- 2
+x2 <- df_to_sp(tmp[tmp$id == id,],2)
+x2 <- SpatialPolygons(list(x2),proj4string=PRO)
+id <- 3
+x3 <- df_to_sp(tmp[tmp$id == id,],2)
+x3 <- SpatialPolygons(list(x3),proj4string=PRO)
+x0 <- rgeos::gDifference(x1,x2)
+x0 <- rgeos::gDifference(x0,x3)
+tmp2 <- ggplot2::fortify(x0)
+i <- tmp2$order %in% c(1:12,14:22)
+x1 <- tmp2[i,]
+x1 <- Polygon(x1[,c("long","lat")],hole=FALSE)
+i <- tmp2$order %in% c(23:30,32,33)
+x2 <- tmp2[i,]
+x2 <- Polygon(x2[,c("long","lat")],hole=FALSE)
+reglugerdir[[length(reglugerdir) + 1]] <- Polygons(list(x1,x2),ID=length(reglugerdir) + 1)
+tmp <- unique(x[x$id == 1,cn])
+tmp$type <- "permanent"
+datDF <- rbind(datDF,tmp)
+@
+Þrátt fyrir ofangreint bann er þó heimilt á tímabilinu frá og með 1. október til og með 1. apríl að stunda veiðar innan svæðisins þannig:
+A. Frá kl. 20.00 að kvöldi til kl. 8.00 að morgni á svæði, sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<2007_0310_1_A, results='asis', echo=FALSE>>=
+id <- 2
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+B. Frá og með 1. febrúar til og með 15. apríl á svæði á „Mehlsack“, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2007_0310_1_B, results='asis', echo=FALSE>>=
+id <- 3
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+
+<<2007_0310_1_plot>>=
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$type %in% "permanent")
+sp::plot(tmp.spdf[i,],col="red")
+i <- which(tmp.spdf$nr == nr & tmp.spdf$type %in% "temporary")
+sp::plot(tmp.spdf[i,],col="yellow",add=TRUE)
+sp::plot(iceland,col="grey",add=TRUE)
+@
+\newpage{}
+2. Á Tánni á tímabilinu frá og með 1. júní til og með 31. október á svæði, sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0310_1_2, echo=FALSE, results='asis'>>=
+id <- 4
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+sp::plot(landhelgi,border="white")
+sp::plot(iceland,col="grey",add=TRUE)
+sp::plot(tmp.spdf[i,],col="yellow",add=TRUE)
+@
+
+\newpage{}
+3. Við Hrollaugseyjar á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0310_1_3, echo=FALSE, results='asis'>>=
+id <- 5
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+@
+Að norðan markast svæðið af stórstraumsfjöruborði.
+<<r2007_0310_1_3_manipulation>>=
+# must be an easier way:
+x1 <- x[x$id %in% id,]
+x1$lat[5] <- x1$lat[1]
+x1 <- rbind(x1,x1[1,])
+x1$lon <- -fishvice::geo_convert(x1$lengd)
+x1$lat <-  fishvice::geo_convert(x1$breidd)
+x1 <- Polygon(x1[,c('lon','lat')],hole=FALSE)
+x1 <- Polygons(list(x1),ID=as.character(id))
+x2 <- SpatialPolygons(list(x1),proj4string=PRO)
+x2 <-  rgeos::gUnion(iceland,x2)
+x2 <-  rgeos::gDifference(x2,iceland)
+x3 <- lapply(x2@polygons , slot , "Polygons" )
+x3 <- Polygons(list(x3[[1]][[1]]), ID=length(reglugerdir) + 1)
+reglugerdir[[length(reglugerdir) + 1]] <- x3
+# end of must be an easier way
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(tmp.spdf[i,],col=scales::alpha("red",0.2))
+plot(iceland,col="grey",add=TRUE)
+plot(skipaflokkur3, border="green",add=TRUE)
+x99 <- rgeos::gIntersection(tmp.spdf[i,],skipaflokkur3)
+plot(x99,col=scales::alpha("red",0.2),add=TRUE)
+@
+
+Athugasemd: Togveiðar (Skipaflokkur 3) eru þegar bannaðar skv lögum innan 3ja sjómílna frá fjöruborði (græn lína).
+
+\newpage{}
+II. Bann við tog- og línuveiðum.
+2. gr. Veiðar með fiskibotn- og flotvörpu og línuveiðar eru bannaðar á eftirgreindum svæðum:
+1. Frá og með 1. mars til og með kl. 17.00 17. ágúst á svæði norður af Horni, er markast af línum, sem dregnar eru milli eftirgreindra punkta.
+
+<<r2007_0310_2_1, echo=FALSE, results='asis'>>=
+id <- 6
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+@
+Að sunnan afmarkast svæðið af línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands.
+<<r2007_0310_2_1_manipulation>>=
+# must be an easier way:
+x1 <- x[x$id %in% id,]
+x1 <- rbind(x1,x1[1,])
+x1$lon <- -fishvice::geo_convert(x1$lengd)
+x1$lat <-  fishvice::geo_convert(x1$breidd)
+x1 <- Polygon(x1[,c('lon','lat')],hole=FALSE)
+x1 <- Polygons(list(x1),ID=as.character(id))
+x2 <- SpatialPolygons(list(x1),proj4string=PRO)
+x2 <- rgeos::gUnion(landhelgi,x2)
+x2 <- rgeos::gDifference(x2,landhelgi)
+x3 <- lapply(x2@polygons , slot , "Polygons" )
+x3 <- Polygons(list(x3[[1]][[1]]), ID=length(reglugerdir) + 1)
+reglugerdir[[length(reglugerdir) + 1]] <- x3
+# end of must be an easier way
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(tmp.spdf[i,],col="yellow")
+plot(iceland,col="grey",add=TRUE)
+plot(landhelgi,add=TRUE)
+plot(vidmidunarlina,add=TRUE,border="blue")
+@
+
+\newpage{}
+2. Norðaustur af Horni á svæði, er markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0310_2_2, echo=FALSE, results='asis'>>=
+id <- 7
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi)
+plot(iceland,col="grey",add=TRUE)
+plot(tmp.spdf[i,],col="red",add=TRUE)
+#plot(landhelgi.sp,add=TRUE)
+@
+
+
+\newpage{}
+3. Á Sporðagrunni á svæði er markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0310_2_3, echo=FALSE, results='asis'>>=
+id <- 8
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi)
+plot(iceland,col="grey",add=TRUE)
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+\newpage{}
+4. Norðan Haganesvíkur á svæði er markast af línum sem dregnar eru milli eftirgreindra punkta. Að sunnan afmarkast svæðið af línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands.
+<<r2007_0310_2_4, echo=FALSE, results='asis'>>=
+id <- 9
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi)
+plot(iceland,col="grey",add=TRUE)
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+\newpage{}
+5. Fyrir Norðausturlandi á svæði sem að vestan markast af línu sem dregin er 10° réttvísandi frá Hraunhafnartanga (viðmiðunarstaður 9) og að austan af línu, sem dregin er 45° réttvísandi frá Langanesi (viðmiðunarstaður 10). Að utan markast svæðið af línu sem dregin er 20 sjómílur utan viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands, en að sunnan af línu sem dregin er 12 sjómílur utan við viðmiðunarlínu sbr. lög nr. 79/1997 um veiðar í fiskveiðilandhelgi Íslands.
+
+Að sunnan afmarkast svæðið af línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands.
+
+<<r2007_0310_2_5, echo=FALSE, results='asis'>>=
+#m20.sp <- expand_sp(vidmidunarlina$sp,20)
+#xy1 <- as.matrix(data.frame(vidmidunarlina.stdf[vidmidunarlina.stdf$id %in% c(9),])[,c('long','lat')])
+#xy2 <- as.matrix(data.frame(vidmidunarlina.stdf[vidmidunarlina.stdf$id %in% c(10),])[,c('long','lat')])
+xy1 <- coordinates(vidmidunarpunktar[vidmidunarpunktar$id %in% 9,])
+xy2 <- coordinates(vidmidunarpunktar[vidmidunarpunktar$id %in% 9,])
+
+xy <- rbind(geosphere::destPointRhumb(xy1,b=10,d=12*1872),
+            geosphere::destPointRhumb(xy1,b=10,d=20*1872),
+            geosphere::destPointRhumb(xy1,b=35,d=50*1872),
+            geosphere::destPointRhumb(xy2,b=45,d=20*1872),
+            geosphere::destPointRhumb(xy2,b=45,d=12*1872),
+            geosphere::destPointRhumb(xy1,b=10,d=12*1872))
+x1 <- sp::SpatialPolygons(list(Polygons(list(Polygon(xy)),ID='xy')),
+                         proj4string = PRO)
+require(rgdal)
+m20.vidmid <- expand_sp(vidmidunarlina,20)
+x1 <- rgeos::gIntersection(x1,m20.vidmid)
+x1 <- rgeos::gDifference(x1,landhelgi)
+
+x3 <- lapply(x1@polygons , slot , "Polygons" )
+x3 <- Polygons(list(x3[[1]][[1]]), ID=length(reglugerdir) + 1)
+#reglugerdir_backup <- reglugerdir
+#datDF_backup <- datDF
+
+reglugerdir[[length(reglugerdir) + 1]] <- x3
+# end of must be an easier way
+tmpDF <- datDF[nrow(datDF),]
+tmpDF$id <- 10
+tmpDF$tolulidur <- 5
+datDF <- rbind(datDF,tmpDF)
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == 10)
+
+plot(landhelgi,col="grey")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+plot(vidmidunarlina,add=TRUE,border="blue")
+@
+\newpage{}
+6. Á Langanesgrunni á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+
+<<r2007_0310_2_6, echo=FALSE, results='asis'>>=
+id <- 11
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi)
+plot(iceland,col="grey",add=TRUE)
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+\newpage{}
+7. Á Digranesflaki á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0310_2_7, echo=FALSE, results='asis'>>=
+id <- 12
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi)
+plot(iceland,col="grey",add=TRUE)
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/a2e611ef8b30cef40025736e005ba1ac?OpenDocument}{Reglugerð 2007\_0883 um breytingu á reglugerð nr. 310, 4. apríl 2007, um friðunarsvæði við Ísland.}}
+2. tl. 2. gr. orðist svo: Norðaustur af Horni á svæði, sem að sunnan markast af línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands, með síðari breytingum og af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_0883, echo=FALSE, results='asis'>>=
+year <- 2007
+nr <- 883
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/c27298f0dbe9a0c50025738e00418450?OpenDocument}{Reglugerð 2007\_1041 breytingu á reglugerð nr. 310, 4. apríl 2007, um friðunarsvæði við Ísland.}}
+Breyting 2007/1041: 2. tl. 2. gr. orðist svo: Norðaustur af Horni á svæði sem að sunnan markast af línu sem dregin er í 12 sjómílna fjarlægð frá viðmiðunarlínu sbr. lög nr. 79/1997, um veiðar í fiskveiðilandhelgi Íslands, með síðari breytingum og af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2007_1041, echo=FALSE, results='asis'>>=
+year <- 2007
+nr <- 1041
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/a9523a35bee8a67c002573e60047edc7?OpenDocument}{Reglugerð 2008\_0100 um bann við veiðum með fiskibotnvörpu í Eyrarbakkabug.}}
+
+1. gr. Frá og með 5. febrúar 2008 eru allar veiðar með fiskibotnvörpu bannaðar í Eyrarbakkabug á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+
+<<r2008_0100_1, echo=FALSE, results='asis'>>=
+year <- 2008
+nr <- 100
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/dc09acf8072cf9b7002574a2004fbf87?OpenDocument}{Reglugerð 2008\_0752 um breytingu á reglugerð nr. 310, 4. apríl 2007, um friðunarsvæði við Íslands.}}
+1. gr.
+
+2. tl. 2. gr. orðist svo: Norðaustur af Horni á svæði, er markast af línum sem dregnar eru milli eftirgreindra punkta:
+<<r2008_0752, echo=FALSE, results='asis'>>=
+year <- 2008
+nr <- 752
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(landhelgi, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/4d4bec1581eb9b250025774a0056cd8a?OpenDocument}{Reglugerð 2010\_0520 um bann við veiðum með fiskibotnvörpu á Álseyjarbleyðu.}}
+
+1. gr. Frá kl. 12.00 þann 24. júní 2010 eru allar veiðar með fiskibotnvörpu bannaðar á Álseyjarbleyðu, sem markast af línu, sem dregin er milli eftirgreindra punkta:
+
+<<r2010_0520_1, echo=FALSE, results='asis'>>=
+year <- 2010
+nr <- 520
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 20
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+xLim <- c(-20.45,-20.4)
+yLim <- c(63.3,63.5)
+plot(tmp.spdf[i,],col="red",xlim=xLim,ylim=yLim)
+plot(iceland,col="grey",add=TRUE)
+@
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/7bc1628534a2c1fd0025795f003f67c0?OpenDocument}{Reglugerð 2011\_1095 um verndun kóralsvæða}}
+
+<<2011_1095>>=
+year <- 2011
+nr <- 1095
+x <- dat[dat$year %in% year & dat$nr %in% nr,]
+@
+
+1. gr. Frá og með 5. desember 2011 eru allar veiðar nema veiðar á uppsjávarfiski með flotvörpu og hringnót bannaðar á eftirgreindum svæðum:
+
+A.  Í Skeiðarárdýpi á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2011_1095_1_A,results='asis'>>=
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+B.  Í Lónsdýpi á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2011_1095_1_B,results='asis'>>=
+id <- 2
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+
+C. Út af Lónsdýpi og Papagrunni á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2011_1095_1_C,results='asis'>>=
+id <- 3
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+\newpage{}
+D. Landgrunnskantur við Papagrunn á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2011_1095_1_D,results='asis'>>=
+id <- 4
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+@
+
+E. Í Rósagarði á svæði, sem markast af línum, sem dregnar eru milli eftirgreindra punkta:
+<<2011_1095_1_E,results='asis'>>=
+id <- 5
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+
+@
+
+<<r2011_1095_SP>>=
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr)
+plot(tmp.spdf[i,],col="red")
+plot(iceland,col="grey",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{http://www.reglugerd.is/interpro/dkm/WebGuard.nsf/58b439f05a7f412f00256a07003476bc/74cbd4e2cbb9a76d0025799d007c692e?OpenDocument}{2012\_0034 Reglugerð um bann við veiðum með fiskibotnvörpu á Rauða torgi.}}
+
+1. gr. Frá og með 26. janúar 2012 eru allar veiðar með fiskibotnvörpu bannaðar á Rauða torgi, á svæði sem markast af línum sem dregnar eru milli eftirgreindra punkta:
+
+<<r2012_0034_1, echo=FALSE, results='asis'>>=
+year <- 2012
+nr <- 34
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(eez, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+@
+
+
+\newpage{}
+\subsubsection*{\href{}{2013\_0431 Reglugerð um stjórn veiða á djúpsjávartegundum á samningssvæði
+Norðaustur-Atlantshafsfiskveiðinefndarinnar (NEAFC).}}
+
+5. gr. Frá 15. febrúar til 15. apríl eru allar veiðar óheimilar á Franshól, sem afmarkast af eftirfarandi hnitum:
+
+<<results='asis'>>=
+year <- 2013
+nr <- 431
+x <- dat[dat$year == year & dat$nr == nr,]
+id <- 1
+print(xtable(prettyCoords(x[x$id == id,c("breidd","lengd")])), scalebox=1.00)
+reglugerdir[[length(reglugerdir) + 1]] <- df_to_sp(x[x$id == id,],length(reglugerdir) + 1)
+datDF <- rbind(datDF,unique(x[x$id == id,cn]))
+
+tmp.spdf <- sp_to_spdf(reglugerdir,datDF,PRO)
+i <- which(tmp.spdf$nr == nr & tmp.spdf$id == id)
+plot(eez, col="grey90")
+plot(tmp.spdf[i,],col="red",add=TRUE)
+
+
+tmpSP <- sp::SpatialPolygons(reglugerdir,proj4string = PRO)
+row.names(datDF) <- 1:nrow(datDF)
+tmp.spdf <- sp::SpatialPolygonsDataFrame(tmpSP,data=datDF)
+@
+
+
+<<save_reglugerdir, eval=FALSE>>=
+reglugerdir <- sp_to_spdf(reglugerdir,datDF,PRO)
+reglugerdirdf@data$area <-
+  round(rgeos::gArea(spTransform(reglugerdirdf,ISN93),TRUE)/1e6,3)
+#devtools::use_data(reglugerdir, overwrite=TRUE)
+save(reglugerdir, file="/home/einarhj/r/Pakkar/gisland/data/reglugerdir.rda")
+@
+
+
+\end{document}

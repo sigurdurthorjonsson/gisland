@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+inst/doc
+*.log
+*.gz
+*.tex
+*.pdf
+*.aux
+data-raw/figure
+data-raw/LMI
+data-raw/experiments.R
