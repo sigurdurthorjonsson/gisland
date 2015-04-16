@@ -916,9 +916,6 @@
   ..@ proj4string:Formal class 'CRS' [package "sp"] with 1 slot
   .. .. ..@ projargs: chr "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 }}
-\source{
-Modified from \url{http://www.lmi.is}
-}
 \usage{
 eez
 }
@@ -926,11 +923,17 @@ eez
 Íslenska efnahaglögsagan reiknuð út frá grunnlínum
 (\code{\link{grunnlina}}) sbr.
 \href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}
+Hnit á miðlínu eru fengin úr milliríkjasamningum milli
+\href{http://www.althingi.is/altext/133/s/0951.html}{Íslands og Færeyjar} og milli
+\href{http://www.althingi.is/altext/122/s/1047.html}{Íslands og Grænlands/Noregs}.
 }
 \examples{
 sp::plot(eez,col=scales::alpha('red',0.2),border="red")
 sp::plot(landhelgi,col=scales::alpha('red',0.2),border="red",add=TRUE)
 sp::plot(iceland,col="grey90",add=TRUE)
+}
+\author{
+Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
 }
 \keyword{datasets}
 

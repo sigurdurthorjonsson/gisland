@@ -24,4 +24,7 @@ three_miles_from_mainland <- expand_sp(iceland[i,], miles=3)
 sp::plot(three_miles_from_mainland, col="red")
 sp::plot(iceland, col="grey90", add=TRUE)
 }
+\author{
+Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
+}
 

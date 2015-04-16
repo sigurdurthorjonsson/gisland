@@ -20,6 +20,8 @@ Línur eru byggðar á grunnpunktum, sjá \code{\link{grunnpunktar}}.
 sp::plot(iceland, col="grey90")
 sp::plot(grunnlina, border="yellow", lwd=2, add=TRUE)
 sp::plot(grunnpunktar, col="red", add=TRUE)
+
+sp::plot(grunnlina[grunnlina$name == "Grímsey",],col="grey90")
 }
 \author{
 Einar Hjorleifsson <einar.hjorleifsson@gmail.com>

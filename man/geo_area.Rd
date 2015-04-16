@@ -10,6 +10,15 @@ geo_area(x)
 \item{x}{Spatial object}
 }
 \description{
-XXXX
+A simpler wrapper around the \code{rgeos::gArea} for calculating area
+}
+\examples{
+require(rgdal)
+geo_area(iceland)
+geo_area(eez)
+geo_area(skipaflokkur3)
+}
+\author{
+Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
 }
 

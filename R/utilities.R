@@ -14,11 +14,13 @@
 
 #' Converts degree-minutes-seconds to degree decimals
 #'
-#' This is the same function as \code{geo::geoconvert.1} , expect function does not
+#' This is the same function as \code{geo::geoconvert.1} , except function does not
 #' return a printout of "error > 60 min"
 #'
 #' @export
 #'
+#' @author Hoskuldur Bjornsson <hoski@@hafro.is>
+#' 
 #' @param x Vector of the form DDMMSS (degree-minutes-seconds)
 geo_convert <- function (x)
 {
@@ -113,6 +115,8 @@ sp_to_geo <- function(x, hole) {
 #' whose projection is in a non-coordinate format.
 #'
 #' @export
+#' 
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
 #'
 #' @param x A SpatialPolygon object
 #' @param miles Distance in miles
@@ -184,11 +188,24 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
 
 #' Calculate area in square kilometers
 #' 
-#' XXXX
+#' A simpler wrapper around the \code{rgeos::gArea} for calculating area
 #' 
 #' @export
 #' 
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
+#' 
 #' @param x Spatial object
+#' 
+#' @examples
+#' require(rgdal)
+#' geo_area(iceland)
+#' geo_area(eez)
+#' geo_area(skipaflokkur3)
 geo_area <- function(x) {
-  return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
+  if(sp::proj4string(x)==PRO@projargs) {
+    return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
+  } else {
+    if(sp::proj4string(x)==ISN93@projargs)
+      return(rgeos::gArea(x)/1e6)
+  }
 }

@@ -10,7 +10,10 @@ geo_convert(x)
 \item{x}{Vector of the form DDMMSS (degree-minutes-seconds)}
 }
 \description{
-This is the same function as \code{geo::geoconvert.1} , expect function does not
+This is the same function as \code{geo::geoconvert.1} , except function does not
 return a printout of "error > 60 min"
+}
+\author{
+Hoskuldur Bjornsson <hoski@hafro.is>
 }
 
