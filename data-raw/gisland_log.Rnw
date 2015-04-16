@@ -108,46 +108,6 @@ pck.path <- path.package("gisland")
 SPlist <- list()
 @
 
-
-\newpage{}
-\section*{Íslenska strandlínan}
-
-Í lögum og reglum er varða stjórn fiskveiða er í sumum tilfellum vísað til fjarlægðar frá (stórstraums)fjöruborði. Upplýsingar um hnit fjöruborðs eru tekin frá Landmælingum Íslands. Línur og flákar er hægt að nálgast á vef LMÍ (http://atlas.lmi.is/LmiData/index.php, IS50V\_STRANDLINA\_01072013\_ISN93.zip). Í frumgögnunum eru xxx flákar og fjöldi hnitpunkta er xxx. Gerð var "þynnri" útgáfa af gögnunum, þar sem skerjum var sleppt og hnitpunktum í því sem eftir var fækkað um u.þ.b. fjórfalt. Niðurstaðan varð   508 flákar (eyjar) mep samtals 75086 hnitpuntkum.
-
-<<r, eval=TRUE, echo=TRUE>>=
-sp::plot(iceland, col="grey90")
-@
-
-<<message=FALSE>>=
-# The source
-dsn <- "/home/einarhj/r/Pakkar/gisland/data-raw/LMI/IS50V_STRANDLINA_SHP"
-biceland <-
-  rgdal::readOGR(dsn,'is50v_strandlina_flakar_01072013',encoding="ISO-8859-1")
-x <- biceland@data
-x <- x[,c("EYJARSKER","SHAPE_Area")]
-biceland@data <- x
-biceland <- sp::spTransform(biceland,PRO)
-@
-
-<<eval=FALSE>>=
-devtools::use_data(biceland)
-@
-
-<<eval=TRUE>>=
-# Create a thinner version (to be saved in the package)
-i <- biceland$EYJARSKER == 1
-df <- biceland@data[i,]
-sp  <- biceland[i,]
-# thin the data
-sp <- rgeos::gSimplify(sp,0.0001,topologyPreserve=TRUE)
-iceland <- sp::SpatialPolygonsDataFrame(sp, df, match.ID = TRUE)
-@
-
-<<eval=FALSE>>=
-devtools::use_data(iceland)
-@
-
-
 \newpage{}
 \section*{\href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}}
 
@@ -584,7 +544,7 @@ m12.vidmid <- expand_sp(vidmidunarlina[i,],12)
 @
 
 <<milesfromShore, eval=TRUE>>=
-i <- biceland$SHAPE_Area == max(biceland$SHAPE_Area)
+i <- biceland$flaki == "mainland"
 mainland <- biceland[i,]
 m03.shore <- expand_sp(mainland,3)
 m04.shore <- expand_sp(mainland,4)

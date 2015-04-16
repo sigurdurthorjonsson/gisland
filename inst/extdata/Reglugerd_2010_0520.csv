@@ -1,5 +1,5 @@
-id,id2,type,breidd,lengd,year,nr,grein,tolulidur,undirlidur,heiti,dags_fra,dags_til,v1,v2,v3,v6,v7,v8,v9,v14,ath
-20,1,permanent,632200,202400,2010,520,1,NA,NA,Álseyjarbleyða,NA,NA,0,0,0,1,0,0,0,0,NA
-20,2,permanent,632200,203000,2010,520,1,NA,NA,Álseyjarbleyða,NA,NA,0,0,0,1,0,0,0,0,NA
-20,3,permanent,632600,202800,2010,520,1,NA,NA,Álseyjarbleyða,NA,NA,0,0,0,1,0,0,0,0,NA
-20,4,permanent,632600,202200,2010,520,1,NA,NA,Álseyjarbleyða,NA,NA,0,0,0,1,0,0,0,0,NA
+id,id2,type,breidd,lengd,year,nr,grein,tolulidur,undirlidur,heiti,dags_fra,dags_til,v1,v2,v3,v5,v6,v7,v8,v9,v14,ath
+20,1,permanent,632200,202400,2010,520,1,NA,NA,Álseyjarbleyða,2010-06-24,NA,0,0,0,0,1,0,0,0,0,NA
+20,2,permanent,632200,203000,2010,520,1,NA,NA,Álseyjarbleyða,2010-06-24,NA,0,0,0,0,1,0,0,0,0,NA
+20,3,permanent,632600,202800,2010,520,1,NA,NA,Álseyjarbleyða,2010-06-24,NA,0,0,0,0,1,0,0,0,0,NA
+20,4,permanent,632600,202200,2010,520,1,NA,NA,Álseyjarbleyða,2010-06-24,NA,0,0,0,0,1,0,0,0,0,NA

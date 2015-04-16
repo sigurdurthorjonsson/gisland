@@ -1,0 +1,36 @@
+---
+title: "gisland - a case in point"
+author: "Einar Hjörleifsson"
+date: "04/10/2015"
+output: pdf_document
+---
+
+```{r}
+require(gisland)
+```
+
+Load Faroe spatial data (local source):
+```{r}
+dsn <- "/home/einarhj/stasi/gis/atlantis_iceland/ia_shapefiles/l93"
+faroe <- rgdal::readOGR(dsn,'faroe_poly_L93')
+faroe <- sp::spTransform(faroe, PRO)
+sp::plot(faroe, col="grey90")
+```
+
+\newpage{}
+Create some seamile extentions from shorlines:
+```{r}
+faroe.3miles <- expand_sp(faroe, miles = 3)
+faroe.6miles <- expand_sp(faroe, miles = 6)
+faroe.12miles <- expand_sp(faroe, miles = 12)
+```
+
+Plot the stuff:
+```{r}
+sp::plot(faroe.12miles, col="blue")
+sp::plot(faroe.6miles,  col="green", add=TRUE)
+sp::plot(faroe.3miles,  col="red",   add=TRUE)
+sp::plot(faroe, col="grey90", add=TRUE)
+```
+
+

@@ -2,7 +2,7 @@ Package: gisland
 Type: Package
 Title: Map data with focus on Icelandic data.
 Version: 0.0.01
-Date: 2015-04-10
+Date: 2015-04-15
 Authors@R: c(
     person("Einar", "Hjorleifsson", email = "einar.hjorleifsson@gmail.com", role = c("aut", "cre")))
 Description: More about what it does (maybe more than one line)
@@ -16,6 +16,9 @@ Suggests:
     geo,
     ggplot2,
     knitr,
+    lubridate,
+    raster,
+    RColorBrewer,
     rgdal,
     rgeos,
     scales,

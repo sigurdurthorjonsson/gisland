@@ -1,0 +1,221 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{amstext}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[pdftex]{hyperref}
+
+\begin{document}
+
+\title{Depth}
+\author{Einar Hjörleifsson}
+\maketitle
+
+
+
+
+Depth lines:
+<<>>=
+suppressPackageStartupMessages(require(rgdal))
+suppressPackageStartupMessages(require(geosphere))
+suppressPackageStartupMessages(require(rgisland))
+require(geo)
+require(dplyr)
+PRO <- CRS('+proj=longlat +datum=WGS84')
+ISN94 <- CRS('+proj=lcc +lat_1=64.25 +lat_2=65.75 +lat_0=65 +lon_0=-19 +x_0=500000 +y_0=500000 +ellps=GRS80 +units=m +no_defs')
+
+make_spatiallines <- function(d,id.name) {
+  d <- d[,c("lon","lat")]
+  names(d) <- c("x","y")
+  d$id <- cumsum(is.na(d$x)) + 1
+  d <- filter(d,x >= -30 & x <= -10 & y >= 62.25 & y <= 67.75)
+  d <- d[!is.na(d$x),]
+  ids <- unique(d$id)
+  line.list <- list()
+  for (i in 1:length(ids)) {
+    line.list[[i]] <- Line(d[d$id == ids[i],c("x","y")])
+  }
+  d.lines <- Lines(line.list,ID="1")  
+  d.sl <- SpatialLines(list(d.lines),proj4string=PRO)
+  d.df <- data.frame(ID="1",depth="id.name")
+  d.sldf <- SpatialLinesDataFrame(d.sl, d.df, match.ID = TRUE)
+  return(d.sldf)
+}
+
+d1000 <- make_spatiallines(gbdypi.1000,"1000 m")
+d500  <- make_spatiallines(gbdypi.500,"500 m")
+d400  <- make_spatiallines(gbdypi.400,"400 m")
+d200  <- make_spatiallines(gbdypi.200,"200 m")
+
+#x <- SpatialLinesDataFrame(d1000, data.frame(ID="1000m"), match.ID = TRUE)
+
+save(d1000,d500,d400,d200,file="data/depth.rda")
+
+
+make_spatiallines2 <- function(d,id.name) {
+  d <- d[,c("lon","lat")]
+  names(d) <- c("x","y")
+  d$id <- cumsum(is.na(d$x)) + 1
+  #d <- filter(d,x >= -30 & x <= -10 & y >= 62.25 & y <= 67.75)
+  d <- d[!is.na(d$x),]
+  ids <- unique(d$id)
+  line.list <- list()
+  lines.list <- list()
+  for (i in 1:length(ids)) {
+    line.list[[i]] <- Line(d[d$id == ids[i],c("x","y")])
+    lines.list[[i]] <- Lines(Line(d[d$id == ids[i],c("x","y")]),ID=as.character(i))
+  }
+  #d.lines <- Lines(line.list,ID="1")  
+  #d.sl <- SpatialLines(list(d.lines),proj4string=PRO)
+  d.sl <- SpatialLines(lines.list,proj4string=PRO)
+  d.df <- data.frame(ID=as.character(1:length(ids)),depth="id.name")
+  d.sldf <- SpatialLinesDataFrame(d.sl, d.df, match.ID = TRUE)
+  return(d.sldf)
+}
+
+d <- make_spatiallines2(gbdypi.1000,1000)
+plot(d)
+ggplot(d,aes(long,lat)) + geom_path(aes(group=group))
+
+ggplot(d) + geom_path(aes(long,lat,group=group))
+
+## add a outer loop for each depth
+
+make_spatiallines3 <- function(d,depths.name) {
+  for (j in 1:length(depths)) {
+    d <- depths[[j]][,c("lon","lat")]
+    names(d) <- c("x","y")
+    d$id <- cumsum(is.na(d$x)) + 1
+    #d <- filter(d,x >= -30 & x <= -10 & y >= 62.25 & y <= 67.75)
+    d <- d[!is.na(d$x),]
+    ids <- unique(d$id)
+    #line.list <- list()
+    #lines.list <- list()
+    for (i in 1:length(ids)) {
+      #line.list[[i]] <- Line(d[d$id == ids[i],c("x","y")])
+      lines.list[[ncounter]] <- Lines(Line(d[d$id == ids[i],c("x","y")]),ID=as.character(ncounter))
+      if(ncounter == 1) {
+        df <- data.frame(ID=as.character(ncounter),depth=depths.name[j])
+      } else {
+        df <- rbind(df,data.frame(ID=as.character(ncounter),depth=depths.name[j]))
+      }
+      ncounter <- ncounter + 1
+    } # next segement
+  } # next depth
+  d.sl <- SpatialLines(lines.list,proj4string=PRO)
+  #d.df <- data.frame(ID=as.character(1:length(ids)),depth="id.name")
+  d.sldf <- SpatialLinesDataFrame(d.sl, df, match.ID = TRUE)
+  return(d.sldf)
+}
+                      
+depths <- list(d1000=gbdypi.1000,d800=gbdypi.800,d500=gbdypi.500,
+               d400=gbdypi.400,d200=gbdypi.200,d100=gbdypi.100)
+depths.name <- c(1000,800,500,400,200,100)
+ncounter <- 1
+lines.list <- list()
+x <- make_spatiallines3(depths,depths.name)
+plot(x[x$depth %in% c(100,1000),])
+@
+
+GEBCO stuff
+<<>>=
+################################################################################
+# creating contour
+require(ncdf)
+require(sp)
+require(maptools)
+d=open.ncdf("/home/einarhj/stasi/gis/GEBCO/gebco_08_-50_55_0_75.nc")
+
+sec30=30/3600 # 30 segundos de arco
+sec15=15/3600 # 15 segundos de arco
+xs <- seq(from=-50,to=-0,by=sec30)
+xs <- xs[-length(xs)]+sec15        # get the mid point
+ys <- seq(from=55,to=75,by=sec30)
+ys <- ys[-length(ys)]+sec15        # get the mid point
+xss = rep(xs,times=length(ys))     # expand
+yss = rep(ys,each=length(xs))
+
+z = get.var.ncdf(d,"z")  
+spp = SpatialPoints(data.frame(x=xss,y=yss))
+gt = points2grid(spp) # Create grid topology
+sgdf = SpatialGridDataFrame(gt, data=as.data.frame(z),CRS("+proj=longlat +datum=WGS84"))
+sgdf@data[sgdf@data>0]=NA   # get rid of positive altimeter values
+
+#cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=seq(from=-100,to=-2000,by=-100))
+#cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=c(-400,-1000,-1200,-1400))
+cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=c(-400,-600,-800,-1000,-1200,-1400))
+cs100 = ContourLines2SLDF(cs100)
+require(gisland)
+proj4string(cs100)= PRO
+plot(cs100)
+
+x <- over(eez,cs100)
+
+
+x <- ggplot2::fortify(cs100)
+x.data <- cs100@data
+x.data$id <- rownames(x.data)
+require(plyr)
+x <- join(x,x.data)
+head(x)
+
+x$n <- 1
+x <- ddply(x,c("group"),transform,n=cumsum(n))
+
+x1 <- ddply(x,c("group"),summarise,n=length(n))
+x1 <- x1[order(x1$n),]
+
+export <- F
+if(export) png("../figures/contour7.png",width=4000,height=3200)
+image(sgdf,col=tim.colors(),axes=T)
+plot(cs100,add=T)
+@
+
+
+GEBCO stuff - larger region
+<<>>=
+################################################################################
+# creating contour
+require(ncdf)
+require(sp)
+require(maptools)
+d=open.ncdf("/home/einarhj/stasi/gis/GEBCO/gebco_08_-90_30_90_90.nc")
+
+sec30=30/3600 # 30 segundos de arco
+sec15=15/3600 # 15 segundos de arco
+xs <- seq(from=-90,to=90,by=sec30)
+xs <- xs[-length(xs)]+sec15        # get the mid point
+ys <- seq(from=30,to=90,by=sec30)
+ys <- ys[-length(ys)]+sec15        # get the mid point
+xss = rep(xs,times=length(ys))     # expand
+yss = rep(ys,each=length(xs))
+
+z = get.var.ncdf(d,"z")  
+spp = SpatialPoints(data.frame(x=xss,y=yss))
+gt = points2grid(spp) # Create grid topology
+sgdf = SpatialGridDataFrame(gt, data=as.data.frame(z),CRS("+proj=longlat +datum=WGS84"))
+sgdf@data[sgdf@data>0]=NA   # get rid of positive altimeter values
+
+#cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=seq(from=-100,to=-2000,by=-100))
+#cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=c(-400,-1000,-1200,-1400))
+cs100 = contourLines(as.image.SpatialGridDataFrame(sgdf),levels=c(-400,-600,-800,-1000,-1200,-1400))
+#tmp <- melt(cs100)
+cs100 = ContourLines2SLDF(cs100)
+proj4string(cs100)=CRS("+proj=longlat +datum=WGS84")
+plot(cs100)
+
+
+
+
+
+export <- F
+if(export) png("../figures/contour7.png",width=4000,height=3200)
+image(sgdf,col=tim.colors(),axes=T)
+plot(cs100,add=T)
+@
+\end{document}

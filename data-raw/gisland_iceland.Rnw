@@ -1,0 +1,131 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,margin=2.5cm}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{amstext}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[pdftex]{hyperref}
+
+\begin{document}
+
+\title{Lög um veiðar}
+\author{Einar Hjörleifsson}
+\maketitle
+
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(warning=FALSE,
+               message=FALSE,
+               fig.align='center',
+               fig.path='figure/log/',
+               fig.width=8.5,
+               fig.height=6.5,
+               tidy=TRUE,
+               tidy.opts=list(width.cutoff=55),
+               pretty=FALSE,
+               echo=FALSE,
+               eval=FALSE)
+require(xtable)
+require(gisland)
+require(sp)
+require(rgdal)
+require(rgeos)
+@
+
+\newpage{}
+<<sessionInfo, results='asis', echo=FALSE>>=
+toLatex(sessionInfo())
+@
+
+This is a rudimentary draft text.
+
+<<x, comment='', echo=FALSE>>=
+print(paste('This document was created in knitr',now()))
+@
+
+
+\section*{Some constants and functions}
+
+<<some_constants>>=
+PRO   <- sp::CRS('+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0')
+ISN93 <- sp::CRS('+proj=lcc +lat_1=64.25 +lat_2=65.75 +lat_0=65 +lon_0=-19 
+                 +x_0=500000 +y_0=500000 +ellps=GRS80 +units=m +no_defs')
+use_data(PRO, ISN93)
+@
+
+\newpage{}
+\section*{Íslenska strandlínan}
+
+Í lögum og reglum er varða stjórn fiskveiða er í sumum tilfellum vísað til fjarlægðar frá (stórstraums)fjöruborði. Upplýsingar um hnit fjöruborðs eru tekin frá Landmælingum Íslands. Línur og flákar er hægt að nálgast á vef LMÍ (http://atlas.lmi.is/LmiData/index.php, IS50V\_STRANDLINA\_01072013\_ISN93.zip). Í frumgögnunum eru xxx flákar og fjöldi hnitpunkta er xxx. Gerð var "þynnri" útgáfa af gögnunum, þar sem skerjum var sleppt og hnitpunktum í því sem eftir var fækkað um u.þ.b. fjórfalt. Niðurstaðan varð   508 flákar (eyjar) mep samtals 75086 hnitpuntkum.
+
+<<r, eval=TRUE, echo=TRUE>>=
+sp::plot(iceland, col="grey90")
+@
+
+<<message=FALSE>>=
+# The source
+dsn <- "/home/einarhj/r/Pakkar/gisland/data-raw/LMI/IS50V_STRANDLINA_SHP"
+biceland <-
+  rgdal::readOGR(dsn,'is50v_strandlina_flakar_01072013',encoding="ISO-8859-1")
+
+# Simplify data.frame
+x <- biceland@data
+x <- x[,c("EYJARSKER","SHAPE_Area")]
+names(x) <- c("flaki","area")
+x$flaki <- ifelse(x$flaki == 1, "eyjar","sker")
+biceland@data <- x
+
+# eyjar
+i <- biceland$flaki == "eyjar"
+eyjar <- biceland[i,]
+# sker
+sker <- biceland[!i,]
+
+# separate out mainland
+i <- eyjar$area == max(eyjar$area)
+mainland <- eyjar[i,]
+mainland@data$flaki <- "mainland"
+eyjar <- eyjar[!i,]
+
+# could in therory split eyjar into further separate entities, e.g.
+#  Vestmannaeyjar, Grímseyjar, Kolbeinsey, ...
+#  Better still area, that also includes the scerries, e.g. Grímsey ásamt
+#  skerjum, Vestamannaeyjar ásamt skerjum.
+
+# e.g. (note does not include Surstey)
+#x <- c(-20.55675,-19.98315,-20.26602,-20.51353,-20.65889,-20.96927,-21.00855,-20.55675)
+#y <- c(63.58647,63.46002,63.21591,63.29142,63.39504,63.44948,63.52149,63.58647)
+#xy <- cbind(x,y)
+#bb <- SpatialPolygons(list(Polygons(list(Polygon(xy)),ID="1")),proj4string=PRO)
+#eyjar <- raster::crop(biceland,bb)
+
+
+
+# merge the spdfs back into one entity
+biceland <- rbind(mainland,eyjar,sker)
+@
+
+
+<<eval=TRUE>>=
+# Create a thinner version (to be saved in the package)
+i <- biceland$flaki %in% c("mainland","eyjar")
+df <- biceland@data[i,]
+sp  <- biceland[i,]
+# thin the data
+sp <- rgeos::gSimplify(sp,0.0001,topologyPreserve=TRUE)
+iceland <- sp::SpatialPolygonsDataFrame(sp, df, match.ID = TRUE)
+@
+
+<<eval=FALSE>>=
+biceland <- spTransform(biceland,PRO)
+iceland <- spTransform(iceland,PRO)
+
+devtools::use_data(biceland)
+devtools::use_data(iceland)
+@
+
+\end{document}

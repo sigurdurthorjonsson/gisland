@@ -10,3 +10,6 @@ inst/doc
 data-raw/figure
 data-raw/LMI
 data-raw/experiments.R
+data-raw/rgisland_depth.Rnw
+data-raw/faroe-demo.Rmd
+data-raw/rgisland_logbooks.Rmd

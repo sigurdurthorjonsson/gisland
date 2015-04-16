@@ -29,3 +29,11 @@
 #' 
 #' @source \url{http://www.lmi.is}
 "iceland"
+
+#' Depth contours
+#'
+#' Present version is stolen, get base from source
+#'
+#' @format \code{SpatiallinesDataFrame}
+#'
+"depth"

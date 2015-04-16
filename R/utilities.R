@@ -119,7 +119,7 @@ sp_to_geo <- function(x, hole) {
 #' @param quadsegs Number of line segments to use to approximate a quarter circle.
 #' @examples
 #' require(rgdal)
-#' i <- iceland$SHAPE_Area == max(iceland$SHAPE_Area)
+#' i <- iceland$flaki %in% "mainland"
 #' three_miles_from_mainland <- expand_sp(iceland[i,], miles=3)
 #' sp::plot(three_miles_from_mainland, col="red")
 #' sp::plot(iceland, col="grey90", add=TRUE)

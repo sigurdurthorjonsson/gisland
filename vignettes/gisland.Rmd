@@ -17,7 +17,7 @@ This package is in it's infant stage.
 
 The `gisland`-package is primarily a collection of various spatial legal and regulatory data objects relevant to Icelandic EEZ management area. And then some ... 
 
-The focus of the package was to make available spatial object library that can be used in consequent analysis within the R environment.
+The focus of the package is to make available spatial object library that can be used in consequent analysis within the R environment. In addition to making a detail map of the icelandic shoreline, most of the currently available spatial objects are related to parlimentary legislation and governmental degrees. The objects have in most cases been generated from source.
 
 All data-objects are in one or the other `spatial*`-formats of `sp`-package.
 
@@ -36,8 +36,8 @@ sp::plot(grunnlina, border="red", add=TRUE)
 sp::plot(grunnpunktar, col="red", add=TRUE)
 ```
 
-```{r, message=FALSE}
-i <- iceland$SHAPE_Area == max(iceland$SHAPE_Area)
+```{r, message=FALSE, eval=FALSE}
+i <- iceland$flaki == "mainland"
 mainland <- iceland[i,]
 require(rgdal)
 m12.shore <- expand_sp(mainland,12)
@@ -53,9 +53,12 @@ sp::plot(eez,col="grey90")
 ```
 
 ```{r}
-i <-  is.na(reglugerdir$dags_til) & reglugerdir$type %in% c("permanent","kórall")
-plot(reglugerdir[i,], col="red")
-plot(iceland,add=T,col="grey90")
+i <-  is.na(reglugerdir$dags_til)
+j <- i & reglugerdir$type %in% c("permanent","kórall")
+sp::plot(iceland,col="grey90")
+sp::plot(reglugerdir[j,], add=TRUE, col="red")
+j <- i & reglugerdir$type %in% c("temporary","spawning")
+sp::plot(reglugerdir[j,], col="yellow",add=TRUE)
 ```
 
 

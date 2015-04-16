@@ -1,5 +1,5 @@
-id,id2,type,breidd,lengd,year,nr,grein,tolulidur,undirlidur,heiti,dags_fra,dags_til,v1,v2,v3,v6,v7,v8,v9,v14,ath
-1,1,permanent,670700,172400,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,1,0,0,0,0,NA
-1,2,permanent,670700,172000,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,1,0,0,0,0,NA
-1,3,permanent,665100,170400,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,1,0,0,0,0,NA
-1,4,permanent,665100,172000,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,1,0,0,0,0,NA
+id,id2,type,breidd,lengd,year,nr,grein,tolulidur,undirlidur,heiti,dags_fra,dags_til,v1,v2,v3,v5,v6,v7,v8,v9,v14,ath
+1,1,permanent,670700,172400,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,0,1,0,0,0,0,NA
+1,2,permanent,670700,172000,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,0,1,0,0,0,0,NA
+1,3,permanent,665100,170400,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,0,1,0,0,0,0,NA
+1,4,permanent,665100,172000,2003,68,1,NA,NA,Sléttugrunn,2003-02-07,NA,1,0,0,0,1,0,0,0,0,NA
