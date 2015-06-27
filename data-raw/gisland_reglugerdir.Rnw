@@ -33,6 +33,7 @@ require(sp)
 require(rgeos)
 require(xtable)
 require(gisland)
+library(dplyr)
 @
 
 \newpage{}
@@ -103,6 +104,10 @@ dat$heiti <- iconv(dat$heiti,"UTF-8","UTF-8")
 dat$dags_fra <- as.Date(dat$dags_fra)
 dat$dags_til <- as.Date(dat$dags_til)
 dat$ID <- paste(dat$year,dat$nr,dat$grein,dat$tolulidur,dat$undirlidur,sep="_")
+dat$rg <- paste(dat$year,dat$nr,sep="_")
+
+rg <- data_frame(rg=unique(dat[,c("rg")]))
+
 @
 
 \newpage{}
