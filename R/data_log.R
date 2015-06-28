@@ -45,6 +45,25 @@
 #' sp::plot(grunnlina[grunnlina$name == "Grímsey",],col="grey90")
 "grunnlina"
 
+#' Grunnlína - simple
+#'
+#' Línur sem eru lagðar til grundvallar á útreikningi á landhelgi (12 sjómílur) og
+#' efnhagslögsögu Íslands sbr. 
+#'  \href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}
+#'
+#' Línur eru byggðar á grunnpunktum, sjá \code{\link{grunnpunktar}}.
+#' 
+#' @format \code{SpatialPolygonsDataFrame}
+#'
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
+#' 
+#' @examples
+#' sp::plot(iceland, col="grey90")
+#' sp::plot(grunnlina_simple, border="yellow", lwd=2, add=TRUE)
+#' sp::plot(grunnpunktar, col="red", add=TRUE)
+#' 
+"grunnlina_simple"
+
 #' Íslenska landhelgin (12 mílur)
 #'
 #' Landhelgi Íslands (12 mílur) reiknaðar út frá grunnlínum
@@ -149,6 +168,25 @@
 #' sp::plot(vidmidunarlina, border="yellow", lwd=2, add=TRUE)
 #' sp::plot(vidmidunarpunktar, col="red", add=TRUE)
 "vidmidunarlina"
+
+#' Viðmiðunarlína
+#'
+#' Línur sem eru lagðar til grundvallar á útreikningi á lögum um veiðar í landhelgi sbr. 
+#'  \href{http://www.althingi.is/lagas/nuna/1997079.html}{Lög um veiðar í fiskveiðilandhelgi Íslands}
+#' 
+#' Athugið að stórstraumsfjöruborð Vestmannaeyja er hér meðtalið
+#' 
+#' @format \code{SpatialLinesDataFrame}
+#'
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
+#' 
+#' @examples
+#' # Fjórar sjómílur út frá viðmiðunarlínu (þ.m.t. frá Vestmannaeyjum)
+#' sp::plot(expand_sp(vidmidunarlina, miles=4), col=scales::alpha('red',0.2),lwd=0.001,border='red')
+#' sp::plot(iceland, col="grey90", add=TRUE)
+#' sp::plot(vidmidunarlina, border="yellow", lwd=2, add=TRUE)
+#' sp::plot(vidmidunarpunktar, col="red", add=TRUE)
+"vidmidunarlina_simple"
 
 #' Heimildir fiskiskipa til veiða í 1. flokki
 #' 

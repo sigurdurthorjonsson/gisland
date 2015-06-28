@@ -192,9 +192,12 @@ devtools::use_data(grunnpunktar)
 <<>>=
 p1 <- grunnpunktar[grunnpunktar$area == "main",]
 l1 <- Line(rbind(coordinates(p1),coordinates(p1)[1,]))
+
 p1 <- spsample(l1, n=20000, type='regular')
 po1 <- Polygon(coordinates(p1))
 po1 <- Polygons(list(po1), ID=1)
+# generate also a simple line
+po1b <- Lines(l1, ID = "1")
 
 p <- grunnpunktar[grunnpunktar$name == "Kolbeinsey",]
 p <- SpatialPoints(p,proj4string = PRO)
@@ -223,10 +226,14 @@ df <- data.frame(ID=c(1:4),name=c("Mainland","Kolbeinsey","Hvalbakur","Grímsey"
                  stringsAsFactors=FALSE)
 Encoding(df$name) <- "UTF-8"
 grunnlina <- SpatialPolygonsDataFrame(grunnlina.sp,df)
+
+grunnlina_simple <- SpatialLines(list(po1b), proj4string = PRO)
+grunnlina_simple <- SpatialLinesDataFrame(grunnlina_simple,data.frame(ID="1"))
 @
 
 <<eval=FALSE>>=
 devtools::use_data(grunnlina)
+devtools::use_data(grunnlina_simple)
 @
 
 <<>>=
@@ -474,6 +481,11 @@ l1 <- Line(coordinates(p1))
 p1 <- spsample(l1,n=5000,type='regular')
 po1 <- Polygon(coordinates(p1))
 po1 <- Polygons(list(po1), ID=1)
+
+vidmidunarlina_simple <- Lines(list(l1), ID = "1")
+vidmidunarlina_simple <- SpatialLines(list(vidmidunarlina_simple), proj4string = PRO)
+vidmidunarlina_simple <- SpatialLinesDataFrame(vidmidunarlina_simple, data.frame(ID = "1"))
+# devtools::use_data(vidmidunarlina_simple)
 
 p <- vidmidunarpunktar[vidmidunarpunktar$name == "Kolbeinsey",]
 p <- SpatialPoints(p,proj4string = PRO)
