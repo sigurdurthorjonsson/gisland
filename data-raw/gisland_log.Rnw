@@ -244,6 +244,15 @@ devtools::use_data(landhelgi)
 source("data-raw/drop_hole.R")
 landhelgi_sldf <- drop_hole(landhelgi)
 landhelgi_sldf <- as(landhelgi_sldf, "SpatialLinesDataFrame")
+# Need to put each Line up to the root
+l1 <- landhelgi_sldf@lines[[1]]@Lines[[1]]
+l1 <- Lines(l1, ID="1")
+l2 <- landhelgi_sldf@lines[[1]]@Lines[[2]]
+l2 <- Lines(l2, ID="2")
+l <- SpatialLines(LinesList = list(l1,l2), proj4string = PRO)
+landhelgi_sldf <- SpatialLinesDataFrame(l,data.frame(ID=c("1","2")))
+library(leaflet) 
+leaflet() %>% addTiles() %>% addPolylines(data=landhelgi_sldf)
 devtools::use_data(landhelgi_sldf)
 @
 
