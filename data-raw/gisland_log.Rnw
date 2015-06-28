@@ -240,6 +240,13 @@ landhelgi <- SpatialPolygonsDataFrame(landhelgi.sp,df)
 devtools::use_data(landhelgi)
 @
 
+<<eval=FALSE>>=
+source("data-raw/drop_hole.R")
+landhelgi_sldf <- drop_hole(landhelgi)
+landhelgi_sldf <- as(landhelgi_sldf, "SpatialLinesDataFrame")
+devtools::use_data(landhelgi_sldf)
+@
+
 
 \textbf{II. Efnahagslögsaga.}
 
@@ -339,6 +346,12 @@ eez <- sp::SpatialPolygonsDataFrame(eez,df)
 
 <<eez_save, eval=FALSE>>=
 devtools::use_data(eez)
+@
+
+<<eval=FALSE>>=
+eez_sldf <- drop_hole(eez)
+eez_sldf <- as(eez_sldf, "SpatialLinesDataFrame")
+devtools::use_data(eez_sldf)
 @
 
 \begin{figure}[H]

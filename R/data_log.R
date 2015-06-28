@@ -61,6 +61,23 @@
 #' sp::plot(grunnpunktar, col="red", add=TRUE)
 "landhelgi"
 
+#' Íslenska landhelgin (12 mílur) - Línur
+#'
+#' Landhelgi Íslands (12 mílur) reiknaðar út frá grunnlínum
+#' (\code{\link{grunnlina}}) sbr.
+#'  \href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}
+#'
+#' @format \code{SpatialLinesDataFrame}
+#' 
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
+#'
+#' @examples
+#' sp::plot(landhelgi_sldf, col="blue")
+#' sp::plot(grunnlina, border="yellow", lwd=2, add=TRUE)
+#' sp::plot(grunnpunktar, col="red", add=TRUE)
+"landhelgi_sldf"
+
+
 #' Íslenska efnahagslögsagan ('200 mílur')
 #'
 #' Íslenska efnahaglögsagan reiknuð út frá grunnlínum
@@ -77,6 +94,23 @@
 #' sp::plot(landhelgi,col=scales::alpha('red',0.2),border="red",add=TRUE)
 #' sp::plot(iceland,col="grey90",add=TRUE)
 "eez"
+
+#' Íslenska efnahagslögsagan ('200 mílur') - Línur
+#'
+#' Íslenska efnahaglögsagan reiknuð út frá grunnlínum
+#' (\code{\link{grunnlina}}) sbr.
+#' \href{http://www.althingi.is/altext/lagas/141b/1979041.html}{Lög um landhelgi, efnahagslögsögu og landgrunn}
+#' Hnit á miðlínu eru fengin úr milliríkjasamningum milli 
+#' \href{http://www.althingi.is/altext/133/s/0951.html}{Íslands og Færeyjar} og milli
+#' \href{http://www.althingi.is/altext/122/s/1047.html}{Íslands og Grænlands/Noregs}.
+#' 
+#' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
+#' 
+#' @examples
+#' sp::plot(eez_sldf, col="blue")
+#' sp::plot(landhelgi_sldf,col="red",add=TRUE)
+#' sp::plot(iceland,col="grey90",add=TRUE)
+"eez_sldf"
 
 # ------------------------------------------------------------------------------
 # Lög um veiðar í fiskveiðilandhelgi Íslands
