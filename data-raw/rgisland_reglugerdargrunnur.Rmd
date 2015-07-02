@@ -1,0 +1,58 @@
+---
+title: "Reglugerðgargrunnur"
+author: "einar"
+date: "13/04/2014"
+output:
+  html_document:
+    css: my.css
+---
+
+```{r, message=FALSE, error=FALSE,comment=FALSE}
+require(dplyr)
+require(data.table)
+require(Logbooks)
+require(eLogbooksDT)
+require(rgisland)
+require(fishvise)
+require(ggplot2)
+```
+
+```
+echo "select f.id, u.id, h.id, h.hnit_N, h.hnit_v, h.veidisv, f.veidisv_id, f.fteg, k.tegund, u.heiti, 
+u.dags_fra dags1,
+to_char(u.dags_fra,'YYYY') y1,
+to_char(u.dags_fra,'MM') M1,
+to_char(u.dags_fra,'DD') D1,
+to_char(u.dags_til,'MM') M2,
+to_char(u.dags_til,'DD') D2,
+to_char(u.dags_til,'YYYY') Y2,
+ u.dags_til dags2, u.teg_veidisvaeda, j.id, j.veidisv_id, j.veidarf, m.id, m.heiti
+from uv.veidisvaedi u, uv.veidisv_fteg f, uv.hnit h, uv.fteg k, uv.veidisv_veidarf j, uv.veidarfa m
+where u.id = f.veidisv_id
+and u.id = h.veidisv
+and k.id=f.fteg
+and m.id = j.veidarf
+and u.id = j.veidisv_id
+order by u.heiti" | sql++ -h > reglugerdir.txt
+```
+
+```{r, eval=FALSE}
+teg_veidisvaeda <- ora::sql("select * from uv.teg_veidisvaeda")
+veidisvaedi <- ora::sql("select id, heiti, dags_fra, dags_til, fors, vmork, teg_veidisvaeda, ath from uv.veidisvaedi")
+hnit <- ora::sql("select * from uv.hnit")
+fteg <- ora::sql("select id, tegund, heiti vmork from uv.fteg")
+veidisv_veidarf <- ora::sql("select * from uv.veidisv_veidarf")
+veidarfa <- ora::sql("select id, heiti from uv.veidarfa")
+save(teg_veidisvaeda,veidisvaedi,hnit,fteg,veidisv_veidarf,veidarfa,file="data-raw/reglugerdir.rda")
+```
+
+```{r}
+require(dplyr)
+d <- veidisvaedi %>%
+  filter(teg.veidisvaeda %in% c("Reglugerð","dummy"),
+         (dags.til > lubridate::now() | is.na(dags.til)))
+
+
+d <- veidisvaedi[veidisvaedi$teg.veidisvaeda %in% "Reglugerð",]
+d <- d[d$dags.til > lubridate::now() | is.na(d$dags.til),]
+```

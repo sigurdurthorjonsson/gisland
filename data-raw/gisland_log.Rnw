@@ -144,7 +144,8 @@ sp::plot(grunnpunktar,col="red",add=TRUE)
 <<>>=
 gpoints.df <- read.table(paste(pck.path,"extdata/GRUNNPUNKTAR.dat",sep="/"),
                          header=TRUE,
-                         stringsAsFactors=FALSE)
+                         stringsAsFactors=FALSE, 
+                         encoding = "UTF-8")
 Encoding(gpoints.df$name) <- "UTF-8"
 gpoints.df$area <- "main"
 gpoints.df$reference="Lög 1979_0041"
@@ -171,8 +172,8 @@ Grimsey <- data.frame(id=nrow(gpoints.df)+3,
 # Collate points into a single data.frame
 gpoints.df <- rbind(gpoints.df,Kolbeinsey,Hvalbakur,Grimsey)
 # Convert the georeference points to coordinates
-gpoints.df$long <- -fishvice::geo_convert(gpoints.df$lengd)
-gpoints.df$lat  <-  fishvice::geo_convert(gpoints.df$breidd)
+gpoints.df$long <- -geo_convert(gpoints.df$lengd)
+gpoints.df$lat  <-  geo_convert(gpoints.df$breidd)
 # Create spatial point data frame
 cn <- c("id","name","breidd","lengd","reference","area")
 Encoding(gpoints.df$name) <- "UTF-8"

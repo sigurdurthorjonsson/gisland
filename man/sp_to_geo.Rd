@@ -20,7 +20,7 @@ Extracts coordinaes from each spatial object into a \code{data.frame} and
 separates each with a row of NA's ("lifts the pen" effect).
 }
 \details{
-Can take some time (function currently based on a for-loop)
+Can take some time (function currently based on a for-loop) if object large.
 }
 \examples{
 d <- sp_to_geo(landhelgi, hole=FALSE)

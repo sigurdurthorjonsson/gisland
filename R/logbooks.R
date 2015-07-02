@@ -7,6 +7,9 @@
 #' @param brks a numerical vector denoting breaks
 plot_catch <- function(r,species=1,brks=c(0.01,0.1,1,10,50,500)) {
   
+  # dummies
+  values <- x <- y <- z <- long <- lat <- group <- rel <- NULL
+  
   iceland <- sp::spTransform(iceland,ISN93)
   
   r <- raster::subset(r,paste("s",species,sep=""))
@@ -59,6 +62,9 @@ raster_logbook <- function(xy,
                            plotit = TRUE,
                            xlim = c(-30,-10),
                            ylim =  c(62.25,67.75)) {
+  
+  # dummy
+  values <- x <- y <- z2 <- long <- lat <- group <- rel <- NULL
     
   i <- xy[,1] >= xlim[1] & xy[,1] <= xlim[2] & xy[,2] >= ylim[1] & xy[,2] <= ylim[2]
   xy <- as.matrix(xy[i,1:2])

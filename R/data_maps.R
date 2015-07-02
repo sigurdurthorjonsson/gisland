@@ -37,3 +37,12 @@
 #' @format \code{SpatiallinesDataFrame}
 #'
 "depth"
+
+
+#' Depth contours from Siglingamálastofnun Íslans
+#'
+#' Present version is stolen, get base from source
+#'
+#' @format \code{SpatiallinesDataFrame}
+#'
+"dypi_sjm"

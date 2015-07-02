@@ -1,20 +1,3 @@
-#' Projection
-#'
-#' The conventional projection
-#'
-#' @format \code{sp::CRS} object
-"PRO"
-
-#' Projection
-#'
-#' Projection used by LMI
-#'
-#' @format \code{sp::CRS} object
-"ISN93"
-
-
-
-
 #' degrees
 #' 
 #' Af function that adds the suffix degree to object. Used e.g.
@@ -42,7 +25,7 @@ pretty_coordinates <- function(x,suffix="") {
 #' Extracts coordinaes from each spatial object into a \code{data.frame} and
 #' separates each with a row of NA's ("lifts the pen" effect).
 #' 
-#' Can take some time (function currently based on a for-loop)
+#' Can take some time (function currently based on a for-loop) if object large.
 #'
 #' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
 #' 
@@ -167,7 +150,8 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
 
 #' Calculate area in square kilometers
 #' 
-#' A simpler wrapper around the \code{rgeos::gArea} for calculating area
+#' A simpler wrapper around the \code{rgeos::gArea} for calculating area taking
+#' care of the projection of the object.
 #' 
 #' @export
 #' 
@@ -181,10 +165,10 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
 #' geo_area(eez)
 #' geo_area(skipaflokkur3)
 geo_area <- function(x) {
-  if(sp::proj4string(x)==PRO@projargs) {
+  if(sp::proj4string(x) == gisland::PRO@projargs) {
     return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
   } else {
-    if(sp::proj4string(x)==ISN93@projargs)
+    if(sp::proj4string(x) == gisland::ISN93@projargs)
       return(rgeos::gArea(x)/1e6)
   }
 }

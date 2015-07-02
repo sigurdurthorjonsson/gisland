@@ -10,7 +10,8 @@ geo_area(x)
 \item{x}{Spatial object}
 }
 \description{
-A simpler wrapper around the \code{rgeos::gArea} for calculating area
+A simpler wrapper around the \code{rgeos::gArea} for calculating area taking
+care of the projection of the object.
 }
 \examples{
 require(rgdal)
