@@ -1,6 +1,7 @@
 #' Get Sjókort
 #'
-#' \code{get_sjokort} accesses a tile server for an Icelandic Sea chart and
+#' \code{get_arnarfjordur} accesses a tile server for a multibeam map of
+#' Arnarfjörður and
 #' downloads/stitches map tiles/formats a map image. 
 #' 
 #' @export
@@ -19,9 +20,9 @@
 #' @return a ggmap object (a classed raster object with a bounding box attribute)
 #' @seealso \code{\link{ggmap}}
 #'
-get_sjokort <- function(
-  bbox = c(left = -24, bottom = 64, right = -22, top = 65),
-  zoom = 8,
+get_arnarfjordur <- function(
+  bbox = c(left = -24.03782, bottom = 65.61127, right = -23.17668, top = 65.83566),
+  zoom = 11,
   maptype = c("sjm"),
   crop = TRUE,
   messaging = FALSE,
@@ -104,7 +105,7 @@ get_sjokort <- function(
   # make urls - e.g. http://tile.stamen.com/[maptype]/[zoom]/[x]/[y].jpg
   
   # no maptypes
-  base_url <- "http://www.hafro.is/~einarhj/tiles/IS_25_26/"
+  base_url <- "http://www.hafro.is/~einarhj/tiles/Arnarfjordur_300dpi/"
   base_url <- paste(base_url, zoom, sep = "")
   urls <- paste(base_url,
                 apply(tilesNeeded[,c("x","y_tms")], 1, paste, collapse = "/"), sep = "/")
@@ -120,7 +121,7 @@ get_sjokort <- function(
   
   listOfTiles <- lapply(split(tilesNeeded, 1:nrow(tilesNeeded)), function(v){
     v <- as.numeric(v)
-    get_sjokort_tile(maptype, zoom, v[1], v[2], v[3], force = force, messaging = messaging)
+    get_arnarfjordur_tile(maptype, zoom, v[1], v[2], v[3], force = force, messaging = messaging)
   })
   
   
@@ -191,7 +192,7 @@ get_sjokort <- function(
 
 
 
-get_sjokort_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, messaging, where = tempdir()){
+get_arnarfjordur_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, messaging, where = tempdir()){
   
   # check arguments
   is.wholenumber <-
@@ -208,13 +209,15 @@ get_sjokort_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, messagin
     filetype <- "png"
   }
   
-  url <- paste0(paste0(c("http://www.hafro.is/~einarhj/tiles/IS_25_26", zoom, x, y_tms), collapse = "/"), ".", filetype)
+  url <- paste0(paste0(c("http://www.hafro.is/~einarhj/tiles/Arnarfjordur_300dpi", zoom, x, y_tms), collapse = "/"), ".", filetype)
   
   # lookup in archive
   tile <- ggmap:::file_drawer_get(url)
   if (!is.null(tile) && !force) return(tile)
   
   # grab if not in archive
+  #   check if tile is available
+  
   tmp <- tempfile()
   download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
   if(messaging) message(paste0("Map from URL : ", url))
