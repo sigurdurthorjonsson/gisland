@@ -7,6 +7,7 @@
 #' 
 #' @param bbox a bounding box in the format c(lowerleftlon, lowerleftlat,
 #'   upperrightlon, upperrightlat).
+#' @param r Extention of the bounding box. Default is 1
 #' @param zoom a zoom level
 #' @param maptype only one type implemented here "sjm"
 #' @param crop crop raw map tiles to specified bounding box
@@ -21,6 +22,7 @@
 #'
 get_sjokort <- function(
   bbox = c(left = -24, bottom = 64, right = -22, top = 65),
+  r = 1,
   zoom = 8,
   maptype = c("sjm"),
   crop = TRUE,
@@ -74,6 +76,16 @@ get_sjokort <- function(
   } else {
     filetype <- "png"
   }
+  
+  x <- c(bbox[1],bbox[3])
+  x <- mean(x) + r * (x - mean(x))
+  y <- c(bbox[2],bbox[4])
+  y <- mean(y) + r * (y - mean(y))
+  
+  bbox = c(left = min(x),
+             bottom = min(y),
+             right = max(x),
+             top = max(y))
   
   # determine tiles to get
   fourCorners <- expand.grid(

@@ -11,14 +11,15 @@ LazyData: TRUE
 Depends:
     R (>= 3.0.0)
 Imports:
+    dplyr,
     ggmap,
+    lubridate,
     png,
     stringr
 Suggests:
     geo,
     ggplot2,
     knitr,
-    lubridate,
     png,
     raster,
     RColorBrewer,
