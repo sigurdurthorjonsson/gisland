@@ -7,9 +7,9 @@
 plot_skyndilokun(d, r = 5)
 }
 \arguments{
-\item{r}{Extention of the bounding box. Default is 5}
+\item{d}{A dataframe containing lon and lat coordinates}
 
-\item{coodinates}{A dataframe containing lon and lat coordinates}
+\item{r}{Extention of the bounding box. Default is 5}
 }
 \description{
 XXX

@@ -89,6 +89,7 @@ sp_to_geo <- function(x, hole) {
 #' three_miles_from_mainland <- expand_sp(iceland[i,], miles=3)
 #' sp::plot(three_miles_from_mainland, col="red")
 #' sp::plot(iceland, col="grey90", add=TRUE)
+
 expand_sp <- function(x, miles, quadsegs = 20) {
   x  <- sp::spTransform(x,gisland::ISN93)
   x  <- rgeos::gBuffer(x,width =  miles * 1852,quadsegs=quadsegs)

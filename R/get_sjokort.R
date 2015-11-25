@@ -21,10 +21,10 @@
 #' @seealso \code{\link{ggmap}}
 #'
 get_sjokort <- function(
-  bbox = c(left = -24, bottom = 64, right = -22, top = 65),
+  bbox = c(left = -30, bottom = 62.5, right = -10, top = 67.5),
   r = 1,
-  zoom = 8,
-  maptype = c("sjm"),
+  zoom = 6,
+  maptype = c("sjm","norwegian"),
   crop = TRUE,
   messaging = FALSE,
   urlonly = FALSE,
@@ -66,6 +66,9 @@ get_sjokort <- function(
   #args <- as.list(match.call(expand.dots = TRUE)[-1])
   #if(checkargs) get_stamenmap_checkargs(args)
   maptype <- match.arg(maptype)
+  
+  maptype <- ifelse(maptype == "norwegian", "S300", "IS_25_26")
+  
   color <- match.arg(color)
   
   if(is.null(names(bbox))) names(bbox) <- c("left","bottom","right","top")
@@ -115,20 +118,25 @@ get_sjokort <- function(
   
   # make urls - e.g. http://tile.stamen.com/[maptype]/[zoom]/[x]/[y].jpg
   
-  # no maptypes
-  base_url <- "http://www.hafro.is/~einarhj/tiles/IS_25_26/"
-  base_url <- paste(base_url, zoom, sep = "")
+  base_url <- "http://www.hafro.is/~einarhj/tiles"
+  base_url <- paste(base_url, maptype, zoom, sep = "/")
   urls <- paste(base_url,
                 apply(tilesNeeded[,c("x","y_tms")], 1, paste, collapse = "/"), sep = "/")
   urls <- paste(urls, filetype, sep = ".")
   if(messaging) message(length(urls), " tiles required.")
   if(urlonly) return(urls)
   
-  # make list of tiles
-  # Einar: tms reference
-  #   v[1] is the x-directory
-  #   v[2] is the y-directory of google system
-  #   v[3] is the y-directory of tms
+  # check what tiles are available
+  for(i in 1:length(urls)) {
+    if(i == 1) {
+      x <- RCurl::url.exists(urls[i])
+    } else {
+      x <- c(x,RCurl::url.exists(urls[i]))
+    }
+  }
+  tilesNeededStored <- tilesNeeded
+  tilesNeeded <- tilesNeeded[x,]
+
   
   listOfTiles <- lapply(split(tilesNeeded, 1:nrow(tilesNeeded)), function(v){
     v <- as.numeric(v)
@@ -156,6 +164,10 @@ get_sjokort <- function(
   if(crop){
     mbbox <- attr(map, "bb")
     
+    # A fix, if tiles do not exist
+    xsNeeded <- sort(unique(tilesNeeded$x))
+    ysNeeded <- sort(unique(tilesNeeded$y))
+    
     size <- 256 * c(length(xsNeeded), length(ysNeeded))
     
     # slon is the sequence of lons corresponding to the pixels
@@ -178,6 +190,7 @@ get_sjokort <- function(
     keep_x_ndcs <- which(bbox["left"] <= slon & slon <= bbox["right"])
     keep_y_ndcs <- sort( size[2] - which(bbox["bottom"] <= slat & slat <= bbox["top"]) )
     
+    #keep_x_ndcs <- keep_x_ndcs[keep_x_ndcs <= ncol(map)]
     croppedmap <- map[keep_y_ndcs, keep_x_ndcs]
   }
   
@@ -194,7 +207,6 @@ get_sjokort <- function(
   attr(croppedmap, "source")  <- "stamen"
   attr(croppedmap, "maptype") <- maptype
   attr(croppedmap, "zoom")    <- zoom
-  
   
   # return
   croppedmap
@@ -220,7 +232,7 @@ get_sjokort_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, messagin
     filetype <- "png"
   }
   
-  url <- paste0(paste0(c("http://www.hafro.is/~einarhj/tiles/IS_25_26", zoom, x, y_tms), collapse = "/"), ".", filetype)
+  url <- paste0(paste0(c("http://www.hafro.is/~einarhj/tiles", maptype, zoom, x, y_tms), collapse = "/"), ".", filetype)
   
   # lookup in archive
   tile <- ggmap:::file_drawer_get(url)

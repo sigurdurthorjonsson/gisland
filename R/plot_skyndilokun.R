@@ -4,7 +4,7 @@
 #' 
 #' @export
 #' 
-#' @param coodinates A dataframe containing lon and lat coordinates
+#' @param d A dataframe containing lon and lat coordinates
 #' @param r Extention of the bounding box. Default is 5
 
 plot_skyndilokun <- function(d, r = 5) {

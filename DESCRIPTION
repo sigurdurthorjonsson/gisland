@@ -1,8 +1,8 @@
 Package: gisland
 Type: Package
 Title: Map data with focus on Icelandic data
-Version: 0.0.01
-Date: 2015-07-02
+Version: 0.0.02
+Date: 2015-11-01
 Authors@R: c(
     person("Einar", "Hjorleifsson", email = "einar.hjorleifsson@gmail.com", role = c("aut", "cre")))
 Description: More about what it does (maybe more than one line). And then some.
@@ -13,14 +13,17 @@ Depends:
 Imports:
     dplyr,
     ggmap,
+    jpeg,
     lubridate,
+    magrittr,
     png,
+    ora,
+    RCurl,
     stringr
 Suggests:
     geo,
     ggplot2,
     knitr,
-    png,
     raster,
     RColorBrewer,
     rgdal,
