@@ -20,6 +20,8 @@
 #' @param color only "color" implemented
 #' @param force if the map is on file, should a new map be looked up?
 #' @param where where should the file drawer be located (without terminating "/")
+#' @param gg Boolean, if TRUE (default) returns a ggmap object with stripped axes
+#' information
 #' @param ... ...
 #' @return a ggmap object (a classed raster object with a bounding box attribute)
 #' @seealso \code{\link{ggmap}}
@@ -37,7 +39,9 @@ function (bbox = c(left = -30, bottom = 62.5, right = -10, top = 67.5),
           urlonly = FALSE,
           color = c("color"), 
           force = FALSE, 
-          where = tempdir(), ...) 
+          where = tempdir(), 
+          gg = TRUE,
+          ...) 
 {
   args <- as.list(match.call(expand.dots = TRUE)[-1])
   argsgiven <- names(args)
@@ -116,9 +120,18 @@ function (bbox = c(left = -30, bottom = 62.5, right = -10, top = 67.5),
                         })
   map <- ggmap:::stitch(listOfTiles)
   if (!crop) {
-    attr(map, "source") <- "stamen"
+    attr(map, "source") <- "arcgis"
     attr(map, "maptype") <- maptype
     attr(map, "zoom") <- zoom
+    if(gg) {
+      map <- ggmap::ggmap(map) +
+      ggplot2::theme(axis.text = ggplot2::element_blank(),
+            axis.title = ggplot2::element_blank(),
+            panel.grid.minor = ggplot2::element_blank(),
+            panel.grid.major = ggplot2::element_blank(),
+            panel.margin = grid::unit(0, "lines"),
+            axis.ticks.length = grid::unit(0, "cm"))
+    }
     return(map)
   }
   if (crop) {
@@ -143,9 +156,18 @@ function (bbox = c(left = -30, bottom = 62.5, right = -10, top = 67.5),
   class(croppedmap) <- c("ggmap", "raster")
   attr(croppedmap, "bb") <- data.frame(ll.lat = bbox["bottom"], 
                                        ll.lon = bbox["left"], ur.lat = bbox["top"], ur.lon = bbox["right"])
-  attr(croppedmap, "source") <- "stamen"
+  attr(croppedmap, "source") <- "arcgis"
   attr(croppedmap, "maptype") <- maptype
   attr(croppedmap, "zoom") <- zoom
+  if(gg) {
+    croppedmap <- ggmap::ggmap(croppedmap) +
+      ggplot2::theme(axis.text = ggplot2::element_blank(),
+                     axis.title = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.margin = grid::unit(0, "lines"),
+                     axis.ticks.length = grid::unit(0, "cm"))
+  }
   croppedmap
 }
 
@@ -172,7 +194,7 @@ function (maptype, zoom, x, y, force = FALSE, messaging = TRUE,
     return(tile)
   tmp <- tempfile()
   download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
-  if (TRUE) 
+  if (messaging) 
     message(paste0("Map from URL : ", url))
   #if (maptype %in% c("World_Imagery")) {
     tile <- jpeg::readJPEG(tmp)

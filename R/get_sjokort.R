@@ -16,6 +16,8 @@
 #' @param color only "color" implemented
 #' @param force if the map is on file, should a new map be looked up?
 #' @param where where should the file drawer be located (without terminating "/")
+#' @param gg Boolean, if TRUE (default) returns a ggmap object with stripped axes
+#' information
 #' @param ... ...
 #' @return a ggmap object (a classed raster object with a bounding box attribute)
 #' @seealso \code{\link{ggmap}}
@@ -31,6 +33,7 @@ get_sjokort <- function(
   color = c("color"),
   force = FALSE,
   where = tempdir(),
+  gg = TRUE,
   ...)
   {
   
@@ -151,10 +154,18 @@ get_sjokort <- function(
   # format map and return if not cropping
   if(!crop) {
     # additional map meta-data
-    attr(map, "source")  <- "stamen"
+    attr(map, "source")  <- "sjokort"
     attr(map, "maptype") <- maptype
     attr(map, "zoom")    <- zoom
-    
+    if(gg) {
+      map <- ggmap::ggmap(map) +
+        ggplot2::theme(axis.text = ggplot2::element_blank(),
+                       axis.title = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       panel.grid.major = ggplot2::element_blank(),
+                       panel.margin = grid::unit(0, "lines"),
+                       axis.ticks.length = grid::unit(0, "cm"))
+    }
     # return
     return(map)
   }
@@ -204,9 +215,20 @@ get_sjokort <- function(
   )
   
   # additional map meta-data
-  attr(croppedmap, "source")  <- "stamen"
+  attr(croppedmap, "source")  <- "sjokort"
   attr(croppedmap, "maptype") <- maptype
   attr(croppedmap, "zoom")    <- zoom
+  
+  if(gg) {
+    croppedmap <- ggmap::ggmap(croppedmap) +
+      ggplot2::theme(axis.text = ggplot2::element_blank(),
+                     axis.title = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.margin = grid::unit(0, "lines"),
+                     axis.ticks.length = grid::unit(0, "cm"))
+  }
+  
   
   # return
   croppedmap

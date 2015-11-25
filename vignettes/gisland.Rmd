@@ -24,8 +24,7 @@ All data-objects are in one or the other `spatial*`-formats of `sp`-package.
 The package may also contain various functions that may or may not be of usage. 
 
 ```{r, message=FALSE}
-require(knitr)
-require(gisland)
+library(gisland)
 ```
 
 ## Objects
@@ -39,8 +38,8 @@ sp::plot(grunnpunktar, col="red", add=TRUE)
 ```{r, message=FALSE, eval=FALSE}
 i <- iceland$flaki == "mainland"
 mainland <- iceland[i,]
-require(rgdal)
 m12.shore <- expand_sp(mainland,12)
+require(rgdal)
 m12.shore <- rgeos::gDifference(m12.shore,mainland)
 sp::plot(landhelgi, col="grey90")
 sp::plot(m12.shore, col=scales::alpha("red",0.2), 
