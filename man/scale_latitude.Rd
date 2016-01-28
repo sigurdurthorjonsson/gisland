@@ -4,14 +4,14 @@
 \alias{scale_latitude}
 \title{Title}
 \usage{
-scale_latitude(ymin = -90, ymax = 90, step = 0.5, ...)
+scale_latitude(from = -90, to = 90, by = 0.5, ...)
 }
 \arguments{
-\item{ymin}{XXX}
+\item{from}{XXX}
 
-\item{ymax}{XXX}
+\item{to}{XXX}
 
-\item{step}{XXX}
+\item{by}{XXX}
 
 \item{...}{XXX}
 }

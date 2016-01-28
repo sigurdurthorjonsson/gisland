@@ -1,8 +1,8 @@
 Package: gisland
 Type: Package
-Title: Map data with focus on Icelandic data
-Version: 0.0.03
-Date: 2015-11-25
+Title: Map data with focus on Icelandic ecoregion
+Version: 0.0.04
+Date: 2016-01-20
 Authors@R: c(
     person("Einar", "Hjorleifsson", email = "einar.hjorleifsson@gmail.com", role = c("aut", "cre")))
 Description: More about what it does (maybe more than one line). And then some.
@@ -17,9 +17,10 @@ Imports:
     jpeg,
     lubridate,
     magrittr,
-    png,
     ora,
+    png,
     RCurl,
+    rgeos,
     stringr
 Suggests:
     geo,
@@ -27,7 +28,7 @@ Suggests:
     raster,
     RColorBrewer,
     rgdal,
-    rgeos,
     scales,
     sp
 VignetteBuilder: knitr
+RoxygenNote: 5.0.1

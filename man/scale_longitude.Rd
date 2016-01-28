@@ -4,14 +4,14 @@
 \alias{scale_longitude}
 \title{Title}
 \usage{
-scale_longitude(from = -180, to = 180, step = 1, ...)
+scale_longitude(from = -180, to = 180, by = 1, ...)
 }
 \arguments{
 \item{from}{XXX}
 
 \item{to}{XXX}
 
-\item{step}{XXX}
+\item{by}{XXX}
 
 \item{...}{XXX}
 }
