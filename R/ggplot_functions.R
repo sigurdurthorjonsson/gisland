@@ -1,31 +1,38 @@
-#' Title
+#' Labels maps with degree and minutes
+#' 
+#' @description Labels maps with degree and minutes.
 #'
-#' @param from XXX
-#' @param to XXX
-#' @param by XXX
-#' @param ... XXX
+#' @param from Minimum longitude label
+#' @param to Maximum longitude label
+#' @param by Breaks in decimal degrees
+#' @param letter Flag which controls if lable should include letters, i.e. E or W. The
+#' is set to FALSE
+#' @param ... other arguments passed to scale_x_continuous
 #'
 #' @export
 
-scale_longitude <- function(from=-180, to=180, by=1, ...) {
+scale_longitude <- function(from=-180, to=180, by=1, letter = FALSE, ...) {
   x <- breaks(from, to, by)
-  x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"W"), paste0(x$txt,"E"))
+  if(letter) x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"W"), paste0(x$txt,"E"))
   return(scale_x_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
 }
 
 
-#' Title
+#' Labels maps with degree and minutes
+#' 
+#' @description Labels maps with degree and minutes.
 #'
-#' @param from XXX
-#' @param to XXX
-#' @param by XXX
-#' @param ... XXX
+#' @param from Minimum latitude label
+#' @param to Maximum latitude label
+#' @param by Breaks in decimal degrees
+#' @param letter Flag which controls if lable should include letters, i.e. N or S. The
+#' is set to FALSE
+#' @param ... other arguments passed to scale_x_continuous
 #'
 #' @export
-#'
-scale_latitude <- function(from=-90, to=90, by=0.5, ...) {
+scale_latitude <- function(from=-90, to=90, by=0.5, letter = FALSE, ...) {
   x <- breaks(from, to, by)
-  x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"S"), paste0(x$txt,"N"))
+  if(letter) x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"S"), paste0(x$txt,"N"))
   return(scale_y_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
 }
 

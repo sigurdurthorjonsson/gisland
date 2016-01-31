@@ -2,20 +2,23 @@
 % Please edit documentation in R/ggplot_functions.R
 \name{scale_latitude}
 \alias{scale_latitude}
-\title{Title}
+\title{Labels maps with degree and minutes}
 \usage{
-scale_latitude(from = -90, to = 90, by = 0.5, ...)
+scale_latitude(from = -90, to = 90, by = 0.5, letter = FALSE, ...)
 }
 \arguments{
-\item{from}{XXX}
+\item{from}{Minimum latitude label}
 
-\item{to}{XXX}
+\item{to}{Maximum latitude label}
 
-\item{by}{XXX}
+\item{by}{Breaks in decimal degrees}
 
-\item{...}{XXX}
+\item{letter}{Flag which controls if lable should include letters, i.e. N or S. The
+is set to FALSE}
+
+\item{...}{other arguments passed to scale_x_continuous}
 }
 \description{
-Title
+Labels maps with degree and minutes.
 }
 
