@@ -14,7 +14,7 @@
 scale_longitude <- function(from=-180, to=180, by=1, letter = FALSE, ...) {
   x <- breaks(from, to, by)
   if(letter) x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"W"), paste0(x$txt,"E"))
-  return(scale_x_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
+  return(ggplot2::scale_x_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
 }
 
 
@@ -33,7 +33,7 @@ scale_longitude <- function(from=-180, to=180, by=1, letter = FALSE, ...) {
 scale_latitude <- function(from=-90, to=90, by=0.5, letter = FALSE, ...) {
   x <- breaks(from, to, by)
   if(letter) x$txt <- ifelse(x$Sign < 0, paste0(x$txt,"S"), paste0(x$txt,"N"))
-  return(scale_y_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
+  return(ggplot2::scale_y_continuous(breaks = x$value, labels = x$txt, expand = c(0, 0), ...))
 }
 
 breaks <- function(from = -180, to = 180, step = 1) {

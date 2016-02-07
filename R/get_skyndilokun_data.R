@@ -5,7 +5,9 @@
 #' @export
 #' 
 #' @param nr Númer skyndilokunar (miðað við núverandi ár)
+
 get_skyndilokun_data <- function(nr) {
+  
   cmd <- paste0("select id, heiti, dags_fra, dags_til, fors, vmork, teg_veidisvaeda, undanthaga, skyring from uv.veidisvaedi where teg_veidisvaeda = 'Skyndilokun' and heiti = '",
                 nr,"'")
   x <- ora::sql(cmd)  %>%
