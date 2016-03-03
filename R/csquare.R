@@ -13,24 +13,16 @@
 #' 
 #' @param lat A vector or decimal degrees latitude
 #' @param lon A vector of cecimal degrees longitude
-#' @param resolution A value specifying of the returned resolution of C-squares: 
+#' @param resolution A value specifying the returned resolution of C-squares: 
 #' 10, 5, 1, 0.5, 0.1, 0.05 and 0.01 in degree units
 #'
 #' @return A character vector
 #' @export
-#'
-#' @examples
-# csquare(lat = c(62.457822, 66.991222), lon = c(-18.223499, -20.996655), resolution = 0.05)
-#lat <-  62.457822
-#lon <- -18.223499
-#csquare(lat = lat, lon = lon, resolution = 0.01)
-
-
 
 csquare_encode <- function(lat, lon, resolution) {
   
   if(length(lon) != length(lon)) stop("length of longitude not equal to length of latitude")
-  if(!resolution %in% c(10,5,1,0.5,0.1,0.05,0.01)) stop("degrees specified not in range: c(10,5,1,0.5,0.1,0.05,0.01)")
+  if(!resolution %in% c(10,5,1,0.5,0.1,0.05,0.01)) stop("resolution not in range: c(10,5,1,0.5,0.1,0.05,0.01)")
   
   lat.abs <- abs(lat)
   lon.abs <- abs(lon)
@@ -98,19 +90,16 @@ code_triplet <- function(lat, lon) {
 #' 
 #' @description Internal function as of now. Think there is a
 #' function in DATRAS that does things better.
+#' 
+#' @export 
 #'
 #' @param x A c-square 
 #' @param method Default ("geo") implemented
 #'
 csquare_area <- function(x, method = "geo") {
   
-  #x <- "7601:131:141:1"
-  
   # center point
-  x <- x %>%
-    csquares(inverse = T) %>%
-    dplyr::select(x, lon6, lat6) %>%
-    rename(csquare = x, lon = lon6, lat = lat6)
+  x <-   csquare_decode(x) 
   # create a "polygon" for one csquare
   x <- data.frame(lon = c(x$lon-0.025,x$lon-0.025,x$lon+0.025,x$lon+0.025,x$lon-0.025),
                   lat = c(x$lat-0.025,x$lat+0.025,x$lat+0.025,x$lat-0.025,x$lat-0.025))
@@ -132,62 +121,110 @@ csquare_area <- function(x, method = "geo") {
   }
 }
 
-#' @title csquares
+
+#' @title Calculate the C-square resolution
+#' 
+#' @description Calculates the resolution of a C-square code
+#' 
+#' @export
+#' 
+#' @param csquare A string of csquare codes
+#' 
+csquare_resolution <- function(x) {
+  n <- nchar(x)                  # length of character determines resolution
+  r <- 10^(1 - floor((n-4)/4))  - 
+    ((round((n-4)/4,1) - floor((n-4)/4)) * 10^(1-floor((n-4)/4))) 
+  return(r)
+}
+
+
+
+#' @title Calculate the longitudes and latitudes from C-squares
 #'
-#' @description XXX https://en.wikipedia.org/wiki/C-squares
+#' @description C-square: A notation system of c-squares provides a compact 
+#' encoding of latitude and longitude coordinates into a machine- and 
+#' human-readable code. See https://en.wikipedia.org/wiki/C-squares
+#' 
+#' @export
+#' 
+#' @return A data frame with longitude (lon) and latitudes (lat)
 #'
-#' @param x a string of csquares
+#' @param x A string of csquare codes
 #' @param baf a value if default (0) no adjustment made. May only be of use for boundary values (-180/180 and -90/90).
 
-csquares_decode <- function(x, baf = 0) {
+csquare_decode <- function(x, resolution, baf = 0) {
   
-  
-  # brute force code - the may be more elegant ways
-  # todo: no need to do via dplyr, just vectors
-  
-  if(inverse) {
+  if(missing(resolution)) {
+    resolution <- csquare_resolution(x)
+  }
     
-    d <- data.frame(x = x, stringsAsFactors = FALSE)
-    d <-
-      d %>%
-      mutate(n      = nchar(x),                  # length of character determines resolution
-             r      = 10^(1 - trunc(n-4)/4)-((round((n-4)/4,1)-trunc((n-4)/4))*10^(1-trunc((n-4)/4))),
-             g1     = as.integer(substr(x,1,1)),
-             g1lat  = as.integer(substr(x,2,2)),
-             g1lon  = as.integer(substr(x,3,4)),
-             g2     = as.integer(substr(x,6,6)),
-             g2lat  = as.integer(substr(x,7,7)),
-             g2lon  = as.integer(substr(x,8,8)),
-             g2lat2 = round(g2*2,-1)/10,
-             g2lon2 = (round((g2-1)/2,1) - trunc((g2-1)/2)) * 2,
-             g3     = as.integer(substr(x,10,10)),
-             g3lat  = as.integer(substr(x,11,11)),
-             g3lon  = as.integer(substr(x,12,12)),
-             g3lat2 = round(g3*2,-1)/10,
-             g3lon2 = (round((g3-1)/2,1) - trunc((g3-1)/2)) * 2,
-             g4     = as.integer(substr(x,14,14)),
-             g4lat  = as.integer(substr(x,15,15)),
-             g4lon  = as.integer(substr(x,16,16)),
-             g4lat2 = round(g4*2,-1)/10,
-             g4lon2 = (round((g4-1)/2,1) - trunc((g4-1)/2)) * 2,
-             signY  = (round(abs(g1 - 4) * 2,-1)/5)-1,
-             signX  = ((2 * (round(g1,-1)/10)) - 1) * -1,
-             # central position
-             lat1 = ((g1lat*10) + 5) * signY,
-             lon1 = ((g1lon*10) + 5) * signX,
-             lat2 = ((g1lat*10) + (g2lat2 * 5) + 2.5) * signY,
-             lon2 = ((g1lon*10) + (g2lon2 * 5) + 2.5) * signX,
-             lat3 = ((g1lat*10) + g2lat + 0.5) * signY,
-             lon3 = ((g1lon*10) + g2lon + 0.5) * signX,
-             lat4 = ((g1lat*10) + g2lat + (g3lat2 * 0.5) + 0.25) * signY,
-             lon4 = ((g1lon*10) + g2lon + (g3lon2 * 0.5) + 0.25) * signX,
-             lat5 = ((g1lat*10) + g2lat + (g3lat * 0.1) + 0.05) * signY,
-             lon5 = ((g1lon*10) + g2lat + (g3lon * 0.1) + 0.05) * signX,
-             lat6 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat2 * 0.05) + 0.025) * signY,
-             lon6 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon2 * 0.05) + 0.025) * signX,
-             lat7 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat * 0.01) + 0.005) * signY,
-             lon7 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005) * signX)
-    return(d)
+  if(!resolution %in% c(10,5,1,0.5,0.1,0.05,0.01)) stop("resolution not in range: c(10,5,1,0.5,0.1,0.05,0.01)")
+  
+  ### --------------------------------------------------------------------------
+  # second trial
+  
+  # put in check here if .e.g. mismatch between res and resolution
+  
+  g1     = as.integer(substr(x,1,1))
+  g1lat  = as.integer(substr(x,2,2))
+  g1lon  = as.integer(substr(x,3,4))
+  
+  g2     = as.integer(substr(x,6,6))
+  g2lat  = as.integer(substr(x,7,7))
+  g2lon  = as.integer(substr(x,8,8))
+  g2lat2 = round(g2*2,-1)/10
+  g2lon2 = (round((g2-1)/2,1) - trunc((g2-1)/2)) * 2
+  
+  g3     = as.integer(substr(x,10,10))
+  g3lat  = as.integer(substr(x,11,11))
+  g3lon  = as.integer(substr(x,12,12))
+  g3lat2 = round(g3*2,-1)/10
+  g3lon2 = (round((g3-1)/2,1) - trunc((g3-1)/2)) * 2
+  
+  g4     = as.integer(substr(x,14,14))
+  g4lat  = as.integer(substr(x,15,15))
+  g4lon  = as.integer(substr(x,16,16))
+  g4lat2 = round(g4*2,-1)/10
+  g4lon2 = (round((g4-1)/2,1) - trunc((g4-1)/2)) * 2
+  
+  signY  = (round(abs(g1 - 4) * 2,-1)/5)-1
+  signX  = ((2 * (round(g1,-1)/10)) - 1) * -1
+
+    # central position
+  if(resolution == 10) {
+    lat1 = ((g1lat*10) + 5) * signY
+    lon1 = ((g1lon*10) + 5) * signX
+    return(data.frame(lat = lat1, lon = lon1))
+  }
+  if(resolution == 5) {
+    lat2 = ((g1lat*10) + (g2lat2 * 5) + 2.5) * signY
+    lon2 = ((g1lon*10) + (g2lon2 * 5) + 2.5) * signX
+    return(data.frame(lat = lat2, lon = lon2))
+  }
+  if(resolution == 1) {
+    lat3 = ((g1lat*10) + g2lat + 0.5) * signY
+    lon3 = ((g1lon*10) + g2lon + 0.5) * signX
+    return(data.frame(lat = lat3, lon = lon3))
+  }
+  if(resolution == 0.5) {
+    lat4 = ((g1lat*10) + g2lat + (g3lat2 * 0.5) + 0.25) * signY
+    lon4 = ((g1lon*10) + g2lon + (g3lon2 * 0.5) + 0.25) * signX
+    return(data.frame(lat = lat4, lon = lon4))
+  }
+  if(resolution == 0.1) {
+    lat5 = ((g1lat*10) + g2lat + (g3lat * 0.1) + 0.05) * signY
+    lon5 = ((g1lon*10) + g2lon + (g3lon * 0.1) + 0.05) * signX
+    return(data.frame(lat = lat5, lon = lon5))
+  }
+  if(resolution == 0.05) {
+    lat6 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat2 * 0.05) + 0.025) * signY
+    lon6 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon2 * 0.05) + 0.025) * signX
+    return(data.frame(lat = lat6, lon = lon6))
+  }
+  if(resolution == 0.01) {
+    lat7 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat * 0.01) + 0.005)  * signY
+    lon7 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005)  * signX
+    return(data.frame(lat = lat7, lon = lon7))
   }
 }
 
