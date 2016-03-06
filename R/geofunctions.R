@@ -37,5 +37,50 @@ geo_convert <- function (x, inverse = FALSE)
   }
 }
 
+#' Classifies if points are inside a region
+#'
+#' @param x A vector of longitudes.
+#' @param y A vector of latitudes.
+#' @param reg A data.frame contain column names lon, lat and Region.
+#'
+#' @return A vector of TRUE and FALSE
+#' @export
+#'
+geo_inside <- function(x, y, reg) {
+  
+  x.reg <- reg$lon
+  y.reg <- reg$lat
 
+  border <- adapt(y.reg, x.reg, projection = "none")
+  tmpinside <- rep(0, length(border$lxv))
+  inside <- rep(0, length(x))
+  inside <- .C("geomarghc", PACKAGE = "geo", as.double(x),
+               as.double(y), as.integer(length(y)), as.double(border$x),
+               as.double(border$y), as.integer(border$lxv), as.integer(length(border$lxv)),
+               as.integer(inside), as.integer(tmpinside))
+  
+  inside <- as.logical(inside[[8]])
+  
+  return(inside)
+}
+
+#' Allocate region name to points
+#'
+#' @param x A vector of longitudes.
+#' @param y A vector of latitudes.
+#' @param reg A data.frame contain column names lon, lat and Region.
+#'
+#' @return A character vector of region names
+#' @export
+#'
+
+geo_region <- function(x, y, reg) {
+  reg.name <- unique(reg$Region)
+  ret <- rep(NA, length(x)) # stuff to return
+  for(i in 1:length(reg.name)) {
+    inside <- geo_inside(x, y, reg[reg$Region %in% reg.name[i],])
+    if(any(inside)) ret[inside] <- reg.name[i]
+  }
+  return(ret)
+}
 

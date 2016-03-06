@@ -1,0 +1,61 @@
+---
+title: "Kortabakgrunnar fyrir ggplot - testing"
+author: "Einar Hjörleifsson"
+output: html_document
+---
+
+```{r, message = FALSE}
+# devtools::install_github("einarhjorleifsson/gisland")
+library(gisland)
+library(ggplot2)
+library(ggmap)
+df <- data.frame(lon = seq(-24, -22, by = 0.25),
+                 lat = seq(64, 65, by = 0.5))
+```
+
+__arcgis__:
+
+```{r, warning = FALSE}
+maptype = c("World_Imagery", "Ocean_Basemap", 
+        "NatGeo_World_Map", "World_Physical_Map", "World_Shaded_Relief", 
+        "World_Street_Map", "World_Terrain_Base", "World_Topo_Map")
+for (i in 1:length(maptype)) {
+  print(maptype[i])
+  m <- get_arcgismap(maptype = maptype[i]) +
+    geom_path(data = landhelgi_sldf, aes(long, lat, group = group)) +
+    geom_path(data = eez_sldf, aes(long, lat, group = group)) +
+    geom_point(data = df, aes(lon, lat), colour = "red", size = 5)
+  print(m)
+}
+```
+
+__sjokort__
+```{r, warning = FALSE}
+m <- get_sjokort(maptype = "sjm")
+print("Obvious problem here")
+m +
+  geom_path(data = landhelgi_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_path(data = eez_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_point(data = df, aes(lon, lat), colour = "red", size = 5)
+
+print('Works inside map range')
+bbox <- c(left = -27, bottom = 62.5, right = -10, top = 67.5)
+m <- get_sjokort(bbox = bbox, maptype = "sjm")
+m +
+  geom_path(data = landhelgi_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_path(data = eez_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_point(data = df, aes(lon, lat), colour = "red", size = 5)
+
+m <- get_sjokort(maptype = "norwegian")
+m +
+  geom_path(data = landhelgi_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_path(data = eez_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_point(data = df, aes(lon, lat), colour = "red", size = 5)
+m <- get_sjokort(bbox = c(-40,55,+20,75),
+                 maptype = "norwegian",
+                 zoom = 5)
+m +
+  geom_path(data = landhelgi_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_path(data = eez_sldf, aes(long, lat, group = group), col = "blue") +
+  geom_point(data = df, aes(lon, lat), colour = "red", size = 1)
+```

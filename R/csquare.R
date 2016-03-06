@@ -3,6 +3,10 @@
 #   csquare_triplet - helper function
 #   csquare_area
 #   csquare_decode
+#   csquare_decode_lat - internal function, used by csquare_lat
+#   csquare_lat
+#   csquare_decode_lon - internal function, used by csquare_lon
+#   csquare_lon
 
 
 #' @title Calculate the C-squares from degrees longitudes and latitudes
@@ -77,7 +81,6 @@ csquare_encode <- function(lat, lon, resolution) {
 #'
 #' @return A triplet character vector of numbers
 #'
-#' @examples
 code_triplet <- function(lat, lon) {
   digit1 <- (2*trunc(lat * 0.2)) + trunc(lon *0.2) + 1
   digit2 <- trunc(lat)
@@ -228,4 +231,44 @@ csquare_decode <- function(x, resolution, baf = 0) {
   }
 }
 
+# internal - used in csquare_lat
+csquare_decode_lat <- function(x, resolution, baf = 0) {
+  csquare_decode(x = x, resolution = resolution)$lat
+}
 
+#' Rounded latitude given csquare resolution
+#'
+#' @param lat Degrees latitude
+#' @param lon Degrees longitude
+#' @param resolution A value specifying the C-square resolution. 
+#' Valid values are 10, 5, 1, 0.5, 0.1, 0.05 and 0.01 degree units
+#'
+#' @return A vector of rounded latitudes
+#' @export
+#'
+csquare_lat <- function(lat, lon, resolution) {
+  sq <- csquare_encode(lat = lat, lon = lon , resolution = resolution)
+  lat <- csquare_decode_lat(sq, resolution = resolution)
+  return(lat)
+}
+
+# internal - unsed in csquare_lon
+csquare_decode_lon <- function(x, resolution, baf = 0) {
+  csquare_decode(x = x, resolution = resolution)$lon
+}
+
+#' Rounded longitude given csquare resolution
+#'
+#' @param lat Degrees latitude
+#' @param lon Degrees longitude
+#' @param resolution A value specifying the C-square resolution. 
+#' Valid values are 10, 5, 1, 0.5, 0.1, 0.05 and 0.01 degree units
+#'
+#' @return A vector of rounded longitudes
+#' @export
+#'
+csquare_lon <- function(lat, lon, resolution) {
+  sq <- csquare_encode(lat = lat, lon = lon , resolution = resolution)
+  lon <- csquare_decode_lon(sq, resolution = resolution)
+  return(lon)
+}

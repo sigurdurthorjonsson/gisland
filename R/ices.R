@@ -12,11 +12,6 @@
 #' @param ... other argument passed on to geom_polygon
 #'
 #' @export
-#'
-#' @examples
-#' ggplot() + icesmap()
-#' ggplot() + icesmap(base = ecoregion, region = "Greater North Sea")
-#' ggplot() + icesmap(base = icesarea, region = c("Va1","Va2","Vb1a","Vb1b","Vb2"))
 
 icesmap <- function(base = ecoregion, region, projection = "ortho", fill = "white", 
                     colour = "grey50", lwd = 0.5, islands.fill = "grey90", ...) {
@@ -63,7 +58,7 @@ icesmap <- function(base = ecoregion, region, projection = "ortho", fill = "whit
                  fill = fill, colour = colour, lwd = lwd, ..., 
                  inherit.aes = FALSE, show.legend = FALSE),
     if(any(hole)) {
-      geom_polygon(data = base[base$hole == TRUE,],
+      ggplot2::geom_polygon(data = base[base$hole == TRUE,],
                    ggplot2::aes_(~long, ~lat, group = ~group), 
                    fill = islands.fill, colour = colour, lwd = lwd, ..., 
                    inherit.aes = FALSE, show.legend = FALSE)

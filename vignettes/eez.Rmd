@@ -1,0 +1,23 @@
+---
+output: 
+  html_document: 
+    fig_height: 6
+    fig_width: 8
+---
+
+### Two sources of eez: `geo` and `gisland`
+
+```{r, message = FALSE}
+library(gisland)
+library(geo)
+library(leaflet)
+library(dplyr)
+
+eez <- ggplot2::fortify(eez_sldf)
+leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(data = eez, lng = ~long, lat = ~lat, color = "yellow", radius = 5) %>% 
+  addCircleMarkers(data = twohmiles, lng = ~lon, lat = ~lat, color = "red", radius = 5)
+```
+
+
