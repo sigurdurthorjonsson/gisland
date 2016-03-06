@@ -25,6 +25,7 @@ The package may also contain various functions that may or may not be of usage.
 
 ```{r, message=FALSE}
 library(gisland)
+ls(2)
 ```
 
 ## Objects
@@ -54,7 +55,9 @@ sp::plot(eez,col="grey90")
 ```{r}
 i <-  is.na(reglugerdir$dags_til)
 j <- i & reglugerdir$type %in% c("permanent","kórall")
-sp::plot(iceland,col="grey90")
+
+sp::plot(reglugerdir[i,])
+sp::plot(iceland,col="grey90", add = TRUE)
 sp::plot(reglugerdir[j,], add=TRUE, col="red")
 j <- i & reglugerdir$type %in% c("temporary","spawning")
 sp::plot(reglugerdir[j,], col="yellow",add=TRUE)
@@ -71,4 +74,3 @@ sp::plot(skipaflokkur3,col=scales::alpha('red',0.1),border="red",add=TRUE)
 sp::plot(skipaflokkur2,col=scales::alpha('red',0.3),border="blue",add=TRUE)
 sp::plot(skipaflokkur1,col=scales::alpha('red',0.3),border="green",add=TRUE)
 ```
-
