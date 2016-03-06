@@ -51,7 +51,7 @@ geo_inside <- function(x, y, reg) {
   x.reg <- reg$lon
   y.reg <- reg$lat
 
-  border <- adapt(y.reg, x.reg, projection = "none")
+  border <- geo::adapt(y.reg, x.reg, projection = "none")
   tmpinside <- rep(0, length(border$lxv))
   inside <- rep(0, length(x))
   inside <- .C("geomarghc", PACKAGE = "geo", as.double(x),
@@ -73,7 +73,6 @@ geo_inside <- function(x, y, reg) {
 #' @return A character vector of region names
 #' @export
 #'
-
 geo_region <- function(x, y, reg) {
   reg.name <- unique(reg$Region)
   ret <- rep(NA, length(x)) # stuff to return

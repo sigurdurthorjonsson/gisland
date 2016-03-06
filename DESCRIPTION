@@ -12,6 +12,7 @@ Depends:
     R (>= 3.0.0)
 Imports:
     dplyr,
+    geo,
     ggmap,
     ggplot2,
     jpeg,
