@@ -1,18 +1,23 @@
-#' @title An arbritrary rectangle from degrees longitudes and latitudes
+#' @title Generate a rectangle code from longitudes and latitudes
 #' 
-#' @description Put some readable text here.
+#' @description The function is primarily aimed at generation of user defined
+#' arbritrary statistical rectangles. The longitudinal and latitudinal resolution
+#' can be specified by the user, e.g. dx = 1 and dy = 0.5 is equivalent to the
+#' ices statistical square resolution. The character code returned is of the form
+#' lon:lat, the numerical specifying the central positions.
 #' 
 #' @param x A vector of decimal degrees longitude.
 #' @param y A vector or decimal degrees latitude.
-#' @param dx, dy Rectangle width and height in decimal degrees.
+#' @param dx Rectangle width in decimal degrees.
+#' @param dy Rectangle height in decimal degrees.
 #' @param invalids A boolean, if TRUE (default) returns NA's if
-#' x outside range of -180 to 180 (longitudes) and if y oustride
-#' reange of -90 to 90 (latitudes).
+#' x outside range of -180 to 180 (longitudes) and if y outside
+#' range of -90 to 90 (latitudes).
 #'
 #' @return A character vector
 #' @export
 #' 
-rsquare_encode <- function(x, y, dx = 1, dy = 0.5,
+square_encode <- function(x, y, dx = 1, dy = 0.5,
                            invalids = TRUE) {
   
   x.brks <- seq(floor(min(x)),ceiling(max(x)),dx)
@@ -27,6 +32,7 @@ rsquare_encode <- function(x, y, dx = 1, dy = 0.5,
    x <- ifelse(x >= -180 & x <= 180, x, NA)
    y <- ifelse(y >= -90  & y <= 90 , y, NA) 
   }
-  return(paste(x, y, sep = ":"))
+  
+  return(paste(round(x,6), round(y,6), sep = ":"))
   
 }

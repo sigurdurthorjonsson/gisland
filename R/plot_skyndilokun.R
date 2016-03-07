@@ -26,7 +26,7 @@ plot_skyndilokun <- function(d, r = 5) {
   # close the box
   d <- rbind(d,d[1,])
   
-  ggmap::ggmap(m) + 
+  m +
     ggplot2::geom_polygon(data = d, ggplot2::aes(lon, lat),
                           colour = "red",
                           fill = "red",

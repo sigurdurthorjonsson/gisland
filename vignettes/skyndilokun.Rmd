@@ -1,0 +1,47 @@
+---
+output: html_document
+---
+
+```{r, echo = FALSE, message = FALSE}
+# ------------------------------------------------------------------
+# some functions
+library(dplyr)
+library(lubridate)
+library(gisland)
+```
+
+
+```{r, echo = FALSE}
+x <- get_skyndilokun_data(nr = "005")
+
+m <- plot_skyndilokun(x$hnit, r = 3)
+
+hnit <- x$hnit %>%
+  mutate(Breidd = pretty_coordinates(lat,"N"),
+         Length = pretty_coordinates(lon,"V")) %>%
+  select(-lon, -lat)
+```
+
+## Skyndilokun nr. `r x$haus$heiti`
+_______
+
+```{r, echo = FALSE}
+m
+```
+
+__`r x$haus$skyring`__
+
+__Gildir frá__: `r x$haus$dags.fra`
+
+__Gildir til__: `r x$haus$dags.til`
+
+__Forsendur__: `r x$haus$fors`
+
+__Tegund__: `r x$tegund`
+
+__Veidarfæri__: `r x$veidarfaeri`
+
+Bannsvæðið afmarkast af línu sem dregin er milli eftirfarandi punkta:
+```{r, echo = FALSE, results = "as.is"}
+knitr::kable(hnit)
+```

@@ -9,6 +9,9 @@ csquare_decode(x, resolution, baf = 0)
 \arguments{
 \item{x}{A string of csquare codes}
 
+\item{resolution}{A value specifying the returned resolution of C-squares: 
+10, 5, 1, 0.5, 0.1, 0.05 and 0.01 in degree units}
+
 \item{baf}{a value if default (0) no adjustment made. May only be of use for boundary values (-180/180 and -90/90).}
 }
 \value{
