@@ -2,19 +2,30 @@
 % Please edit documentation in R/geofunctions.R
 \name{geo_convert}
 \alias{geo_convert}
-\title{Converts degree-minutes-seconds to degree decimals}
+\title{Convert latitude and longitude}
 \usage{
-geo_convert(x, inverse = FALSE)
+geo_convert(x, inverse = FALSE, na = FALSE)
 }
 \arguments{
-\item{x}{Vector of the form DDMMSS (degree-minutes-seconds)}
+\item{x}{A vector of the form DDMMmm or DD.dd}
 
 \item{inverse}{Which conversion should be undertaken, default from 
 degrees-minutes-decimal minutes (DDMMmm) to decimal degrees (DD.dd)}
+
+\item{na}{A boolean, if FALSE (default) minutes larger than 60 are
+rounded up, if TRUE returns NA's. Only appicable when inverse TRUE.}
 }
 \description{
-This is the same function as \code{geo::geoconvert.1} , except function does not
-return a printout of "error > 60 min"
+Convert between different representations of latitude and
+longitude, namely degrees-minutes-decimal minutes (DDMMmm) and decimal
+degrees (DD.dd).
+
+Adapted from geo::geoconvert to be dplyr pipe friendly
+}
+\examples{
+geo_convert(c(-124598,032269))
+geo_convert(c(-124598,037569),na=TRUE)
+geo_convert(c(-12.766333,3.378167), inverse = TRUE)
 }
 \author{
 Hoskuldur Bjornsson <hoski@hafro.is>

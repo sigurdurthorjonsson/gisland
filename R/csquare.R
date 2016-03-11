@@ -111,17 +111,17 @@ csquare_area <- function(x, method = "geo") {
     x <- geo::geoarea(x)
     return(x)
   }
+
   
-  
-  if(method != "geo") {
-    x <- Polygon(x[,c("lon","lat")]) %>%
-      list() %>%
-      Polygons(ID = "1") %>%
-      list() %>%
-      SpatialPolygons(proj4string = PRO) %>%
-      geo_area()
-    return(x)
-  }
+  #if(method != "geo") {
+  #  x <- sp::Polygon(x[,c("lon","lat")]) %>%
+  #    list() %>%
+  #    Polygons(ID = "1") %>%
+  #    list() %>%
+  #    SpatialPolygons(proj4string = PRO) %>%
+  #    geo_area()
+  #  return(x)
+  #}
 }
 
 
@@ -133,8 +133,8 @@ csquare_area <- function(x, method = "geo") {
 #' 
 #' @param csquare A string of csquare codes
 #' 
-csquare_resolution <- function(x) {
-  n <- nchar(x)                  # length of character determines resolution
+csquare_resolution <- function(csquare) {
+  n <- nchar(csquare)  # length of character determines resolution
   r <- 10^(1 - floor((n-4)/4))  - 
     ((round((n-4)/4,1) - floor((n-4)/4)) * 10^(1-floor((n-4)/4))) 
   return(r)

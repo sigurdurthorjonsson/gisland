@@ -4,7 +4,7 @@
 \alias{geo_region}
 \title{Allocate region name to points}
 \usage{
-geo_region(x, y, reg)
+geo_region(x, y, reg, region.name = "Region")
 }
 \arguments{
 \item{x}{A vector of longitudes.}
@@ -12,9 +12,12 @@ geo_region(x, y, reg)
 \item{y}{A vector of latitudes.}
 
 \item{reg}{A data.frame contain column names lon, lat and Region.}
+
+\item{region.name}{The column name in object reg that contains
+the value/text to be returned.}
 }
 \value{
-A character vector of region names
+A vector of region names
 }
 \description{
 Allocate region name to points

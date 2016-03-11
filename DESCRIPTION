@@ -24,7 +24,6 @@ Imports:
     rgeos,
     stringr
 Suggests:
-    geo,
     knitr,
     raster,
     RColorBrewer,

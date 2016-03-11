@@ -9,6 +9,7 @@
 
 plot_skyndilokun <- function(d, r = 5) {
   
+  lon <- lat <- NULL # dummy 
   d$lon <- -geo_convert(d$lon)
   d$lat <-  geo_convert(d$lat)
   

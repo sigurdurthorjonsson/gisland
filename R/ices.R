@@ -16,6 +16,7 @@
 icesmap <- function(base = ecoregion, region, projection = "ortho", fill = "white", 
                     colour = "grey50", lwd = 0.5, islands.fill = "grey90", ...) {
   
+  ecoregion <- Region <- NULL # dummy
   if(!missing(region))  {
     
     

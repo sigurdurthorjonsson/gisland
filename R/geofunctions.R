@@ -3,25 +3,36 @@
 #  Functions are amended to be more in flow with the 
 #  dplyr syntax
 
-#' @title Converts degree-minutes-seconds to degree decimals
+#' @title Convert latitude and longitude
 #'
-#' @description This is the same function as \code{geo::geoconvert.1} , except function does not
-#' return a printout of "error > 60 min"
+#' @description Convert between different representations of latitude and
+#' longitude, namely degrees-minutes-decimal minutes (DDMMmm) and decimal
+#' degrees (DD.dd).
+#' 
+#' Adapted from geo::geoconvert to be dplyr pipe friendly
 #'
 #' @export
 #'
 #' @author Hoskuldur Bjornsson <hoski@@hafro.is>
 #' 
-#' @param x Vector of the form DDMMSS (degree-minutes-seconds)
+#' @param x A vector of the form DDMMmm or DD.dd
 #' @param inverse Which conversion should be undertaken, default from 
 #' degrees-minutes-decimal minutes (DDMMmm) to decimal degrees (DD.dd)
-geo_convert <- function (x, inverse = FALSE)
+#' @param na A boolean, if FALSE (default) minutes larger than 60 are
+#' rounded up, if TRUE returns NA's. Only appicable when inverse TRUE.
+#' @examples
+#' geo_convert(c(-124598,032269))
+#' geo_convert(c(-124598,037569),na=TRUE)
+#' geo_convert(c(-12.766333,3.378167), inverse = TRUE)
+geo_convert <- function (x, inverse = FALSE, na = FALSE)
 {
   if(!inverse) {
   i <- sign(x)
   x <- abs(x)
 
   min <- (x/100) - trunc(x/10000) * 100
+  if(na) min <- ifelse(min > 60, NA, min)
+  
   return((i * (x + (200/3) * min))/10000)
   } else {
     i <- sign(x)
@@ -65,15 +76,19 @@ geo_inside <- function(x, y, reg) {
 #' @param x A vector of longitudes.
 #' @param y A vector of latitudes.
 #' @param reg A data.frame contain column names lon, lat and Region.
+#' @param region.name The column name in object reg that contains
+#' the value/text to be returned.
 #'
-#' @return A character vector of region names
+#' @return A vector of region names
 #' @export
 #'
-geo_region <- function(x, y, reg) {
-  reg.name <- unique(reg$Region)
+geo_region <- function(x, y, reg, region.name = "Region") {
+  reg.name <- unique(reg[,region.name])
   ret <- rep(NA, length(x)) # stuff to return
+  x <- ifelse(is.na(x), -999, x) # dummy
+  y <- ifelse(is.na(y), -999, y) # dummy
   for(i in 1:length(reg.name)) {
-    inside <- geo_inside(x, y, reg[reg$Region %in% reg.name[i],])
+    inside <- geo_inside(x, y, reg[reg[,region.name] %in% reg.name[i],])
     if(any(inside)) ret[inside] <- reg.name[i]
   }
   return(ret)

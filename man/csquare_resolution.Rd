@@ -4,7 +4,7 @@
 \alias{csquare_resolution}
 \title{Calculate the C-square resolution}
 \usage{
-csquare_resolution(x)
+csquare_resolution(csquare)
 }
 \arguments{
 \item{csquare}{A string of csquare codes}
