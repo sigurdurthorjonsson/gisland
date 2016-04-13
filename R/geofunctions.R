@@ -94,3 +94,36 @@ geo_region <- function(x, y, reg, region.name = "Region") {
   return(ret)
 }
 
+#' Geographic distance computation
+#' 
+#' dplyr-ized version of geo::arcdist
+#'
+#' @param x1 A vector of longitudes.
+#' @param y1 A vector of latitudes.
+#' @param x2 A vector of longitudes.
+#' @param y2 A vector of latitudes.
+
+#' @param units A atomic character vector, if "nmi" (default) returns
+#' values in nautical miles, any other value returns kilometers 
+#'
+#' @return A numerical vector
+#' @export
+#'
+geo_distance <- function(x1, y1, x2, y2, unit = "nmi") {
+  
+  if (unit == "nmi") { 
+    miles <- 1.852
+  } else {
+    miles <- 1
+  }
+  
+  rad <- 6367
+  mult1 <- (rad/miles)
+  mult2 <- pi/180
+  
+  ret <- mult1 * acos(sin(mult2 * y1) * sin(mult2 * y2) + 
+                        cos(mult2 * y1) * cos(mult2 * y2) * cos(mult2 * x1 - mult2 * x2))
+
+  return(ret)
+  
+}
