@@ -4,10 +4,13 @@
 \alias{geo_area}
 \title{Calculate area in square kilometers}
 \usage{
-geo_area(x)
+geo_area(x, group_variable)
 }
 \arguments{
 \item{x}{Spatial object}
+
+\item{group_variable}{character vector specifying variable that separates
+polygons}
 }
 \description{
 A simpler wrapper around the \code{rgeos::gArea} for calculating area taking

@@ -176,6 +176,12 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
   return(d.spdf)
 }
 
+# ------------------------------------------------------------------------------
+# Need to clean up these next two functions
+#
+# Also add posibilities to tile area from x, y, dx and dy
+
+
 #' Calculate area in square kilometers
 #' 
 #' A simpler wrapper around the \code{rgeos::gArea} for calculating area taking
@@ -186,17 +192,65 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
 #' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
 #' 
 #' @param x Spatial object
+#' @param group_variable character vector specifying variable that separates
+#' polygons
 #' 
 #' @examples
 #' require(rgdal)
 #' geo_area(iceland)
 #' geo_area(eez)
 #' geo_area(skipaflokkur3)
-geo_area <- function(x) {
-  if(sp::proj4string(x) == gisland::PRO@projargs) {
-    return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
-  } else {
-    if(sp::proj4string(x) == gisland::ISN93@projargs)
-      return(rgeos::gArea(x)/1e6)
+geo_area <- function(x, group_variable) {
+  
+  # note there are more sp class objects that may work
+  if(class(x) %in% c("SpatialPolygonsDataFrame")) {
+    if(sp::proj4string(x) == gisland::PRO@projargs) {
+      return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
+    } else {
+      if(sp::proj4string(x) == gisland::ISN93@projargs)
+        return(rgeos::gArea(x)/1e6)
+    }
   }
+  
+  if(class(x) %in% c("data.frame")) {
+    
+    return(geoarea2(x, group_variable = group_variable))
+    
+  }
+  
 }
+
+
+geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method = F, ngrdpts = 2000, 
+          robust = T) 
+{
+  
+  area <- 0
+  
+  if(missing(group_variable)) {
+    data <- geo::geo.Split.poly(data)
+  } else {
+    # need to use group_variable
+    data <- data  %>%  dplyr::group_by_(group_variable) %>% tidyr::nest()
+    data <- data$data
+  }
+  if (old.method) {
+    for (i in 1:length(data)) area <- area + geoarea.old(data[[i]], 
+                                                         ngrdpts, robust)
+  }
+  else {
+    area <- 0
+    for (i in 1:length(data)) {
+      if (Projection == "Lambert") 
+        data[[i]] <- geo::lambert(data[[i]]$lat, data[[i]]$lon, 
+                             mean(data[[i]]$lat), mean(data[[i]]$lon), mean(data[[i]]$lat))
+      else data[[i]] <- geo::mercator(data[[i]]$lat, data[[i]]$lon, 
+                                 b0 = mean(data[[i]]$lat))
+      data[[i]] <- data.frame(x = data[[i]]$x, y = data[[i]]$y)
+      n <- nrow(data[[i]])
+      area <- area + abs(sum(data[[i]]$x[1:(n - 1)] * data[[i]]$y[2:n] - 
+                               data[[i]]$x[2:n] * data[[i]]$y[1:(n - 1)], na.rm = T)/2)
+    }
+  }
+  return(area)
+}  

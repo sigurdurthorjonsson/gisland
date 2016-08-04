@@ -1,3 +1,21 @@
+#' geo_plot
+#' 
+#' Base plot for Icelandic waters
+#'
+#' @return list of ggplot2 objects
+#' @export
+#'
+geo_plot <- function() {
+  list(
+    ggplot2::theme_bw(),
+    ggplot2::geom_polygon(data = gisland::iceland, ggplot2::aes(long, lat, group = group), fill = "grey90"),
+    ggplot2::coord_quickmap(xlim = c(-30, -10), ylim = c(62.2, 67.9)),
+    scale_longitude(name = NULL, by = 2),
+    scale_latitude(name = NULL, by = 1)
+  )
+}
+
+
 #' Labels maps with degree and minutes
 #' 
 #' @description Labels maps with degree and minutes.

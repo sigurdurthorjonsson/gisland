@@ -102,8 +102,7 @@ geo_region <- function(x, y, reg, region.name = "Region") {
 #' @param y1 A vector of latitudes.
 #' @param x2 A vector of longitudes.
 #' @param y2 A vector of latitudes.
-
-#' @param units A atomic character vector, if "nmi" (default) returns
+#' @param unit A atomic character vector, if "nmi" (default) returns
 #' values in nautical miles, any other value returns kilometers 
 #'
 #' @return A numerical vector
