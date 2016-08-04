@@ -253,4 +253,42 @@ geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method =
     }
   }
   return(area)
-}  
+} 
+
+#' Calculate area of a tile given resolution
+#'
+#' @param x tile horizontal midpoint
+#' @param y tile vertical midpoint
+#' @param dx tile horizontal resulution
+#' @param dy tile vertical resolution
+#'
+#' @return a numeric vector of length 1
+#' @export
+#'
+#' @examples
+# tile_area(-20, 0, 1, 0.5)
+# tile_area(-20, 64, 1, 0.5)
+# tile_area(-20, 85, 1, 0.5)
+# df <- data_frame(x = seq(0, 20, by = 1),
+#                  y = seq(65, 75, by = 0.5))
+# df %>%
+#  rowwise() %>%
+#  dplyr::mutate(area = tile_area(x, y, dx = 1, dy = 0.5))
+tile_area <- function(x, y, dx, dy) {
+  
+  dx <- abs(dx/2)  # half the distance
+  dy <- abs(dy/2)  # ...
+  d <- data.frame(lon = c(x - dx, x - dx, x + dx, x + dx, x - dx),
+                  lat = c(y - dy, y + dy, y + dy, y - dy, y - dy))
+  # calculate area
+  d <- geo_area(d)
+  
+  # this does not work:
+  # d <-
+  #  d %>%
+  #  rowwise()
+  # d <- geo_area(d)
+  
+  return(d)
+  
+}

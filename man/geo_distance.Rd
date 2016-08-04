@@ -15,7 +15,7 @@ geo_distance(x1, y1, x2, y2, unit = "nmi")
 
 \item{y2}{A vector of latitudes.}
 
-\item{units}{A atomic character vector, if "nmi" (default) returns
+\item{unit}{A atomic character vector, if "nmi" (default) returns
 values in nautical miles, any other value returns kilometers}
 }
 \value{
