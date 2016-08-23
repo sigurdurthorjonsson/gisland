@@ -34,5 +34,8 @@ intveral, ie. a start and end time, an additional (co)variable
 (e.g. vessel id) and then some "id" that is returned (fishing trip
 id, fishing event id, ...). It may though be of use in other cases that may
 not necessarily be related to time.
+
+The function should be analogous to vmstools::mergeEflalo2Tacsat, albeit
+more generic.
 }
 

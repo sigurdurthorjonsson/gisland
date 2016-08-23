@@ -53,7 +53,7 @@ geo_convert <- function (x, inverse = FALSE, na = FALSE)
 #' @return A vector of TRUE and FALSE
 #' @export
 #'
-geo_inside <- function(x, y, reg) {
+geo_inside2 <- function(x, y, reg) {
   
   x.reg <- reg$lon
   y.reg <- reg$lat

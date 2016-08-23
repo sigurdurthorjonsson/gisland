@@ -172,7 +172,7 @@ get_arnarfjordur <- function(
   
   
   # format map
-  croppedmap <- as.raster(croppedmap)
+  croppedmap <- grDevices::as.raster(croppedmap)
   class(croppedmap) <- c("ggmap","raster")
   attr(croppedmap, "bb") <- data.frame(
     ll.lat = bbox["bottom"], ll.lon = bbox["left"],
@@ -219,7 +219,7 @@ get_arnarfjordur_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, mes
   #   check if tile is available
   
   tmp <- tempfile()
-  download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
+  utils::download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
   if(messaging) message(paste0("Map from URL : ", url))
   
   # read in
@@ -234,9 +234,9 @@ get_arnarfjordur_tile <- function(maptype, zoom, x, y, y_tms, force = FALSE, mes
   # toner-lines treated differently for alpha
   if(maptype %in% c("toner-hybrid", "toner-labels", "toner-lines",
                     "terrain-labels", "terrain-lines")){
-    tile <- t(apply(tile, 1:2, function(x) rgb(x[1], x[2], x[3], x[4])))
+    tile <- t(apply(tile, 1:2, function(x) grDevices::rgb(x[1], x[2], x[3], x[4])))
   } else {
-    tile <- t(apply(tile, 2, rgb))
+    tile <- t(apply(tile, 2, grDevices::rgb))
   }
   
   

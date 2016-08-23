@@ -152,7 +152,7 @@ function (bbox = c(left = -30, bottom = 62.5, right = -10, top = 67.5),
                                           slat & slat <= bbox["top"]))
     croppedmap <- map[keep_y_ndcs, keep_x_ndcs]
   }
-  croppedmap <- as.raster(croppedmap)
+  croppedmap <- grDevices::as.raster(croppedmap)
   class(croppedmap) <- c("ggmap", "raster")
   attr(croppedmap, "bb") <- data.frame(ll.lat = bbox["bottom"], 
                                        ll.lon = bbox["left"], ur.lat = bbox["top"], ur.lon = bbox["right"])
@@ -193,7 +193,7 @@ function (maptype, zoom, x, y, force = FALSE, messaging = TRUE,
   if (!is.null(tile) && !force) 
     return(tile)
   tmp <- tempfile()
-  download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
+  utils::download.file(url, destfile = tmp, quiet = !messaging, mode = "wb")
   if (messaging) 
     message(paste0("Map from URL : ", url))
   #if (maptype %in% c("World_Imagery")) {
@@ -203,10 +203,10 @@ function (maptype, zoom, x, y, force = FALSE, messaging = TRUE,
   #}
   if (maptype %in% c("toner-hybrid", "toner-labels", "toner-lines", 
                      "terrain-labels", "terrain-lines")) {
-    tile <- t(apply(tile, 1:2, function(x) rgb(x[1], x[2], 
+    tile <- t(apply(tile, 1:2, function(x) grDevices::rgb(x[1], x[2], 
                                                x[3], x[4])))
   } else {
-    tile <- t(apply(tile, 2, rgb))
+    tile <- t(apply(tile, 2, grDevices::rgb))
   }
   lonlat_upperleft <- ggmap::XY2LonLat(x, y, zoom)
   lonlat_lowerright <- ggmap::XY2LonLat(x, y, zoom, 255, 255)

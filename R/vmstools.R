@@ -160,9 +160,9 @@ calc_interval <- function(x, w1 = 0.5, w2 = 0.5) {
   w1 <- w1/(w1 + w2)
   w2 <- w2/(w1 + w2)
   
-  x1 <- (dplyr::lead(x) - x)/lubridate::dminutes(1)
-  x1 <- ifelse(is.na(x1), dplyr::lag(x1), x1)
-  x2 <- w1 * x1 + w2 * dplyr::lag(x1)
+  x1 <- (x - dplyr::lag(x))/lubridate::dminutes(1)
+  x1 <- ifelse(is.na(x1), dplyr::lead(x1), x1)
+  x2 <- w1 * x1 + w2 * dplyr::lead(x1)
   x2 <- ifelse(is.na(x2), x1, x2)
   
   return(x2)

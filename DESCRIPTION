@@ -3,8 +3,8 @@ Type: Package
 Title: Map data with focus on Icelandic ecoregion
 Version: 0.0.05
 Date: 2016-08-04
-Authors@R: c(
-    person("Einar", "Hjorleifsson", email = "einar.hjorleifsson@gmail.com", role = c("aut", "cre")))
+Author: Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
+Maintainer: Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
 Description: More about what it does (maybe more than one line). And then some.
 License: GPL-3
 LazyData: TRUE
@@ -16,6 +16,7 @@ Imports:
     geo,
     ggmap,
     ggplot2,
+    grDevices,
     jpeg,
     lubridate,
     magrittr,
@@ -23,14 +24,15 @@ Imports:
     png,
     RCurl,
     rgeos,
+    sp,
     stringr,
-    tidyr
+    tidyr,
+    utils
 Suggests:
     knitr,
     raster,
     RColorBrewer,
     rgdal,
-    scales,
-    sp
+    scales
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
