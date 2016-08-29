@@ -18,7 +18,7 @@ returned. If missing (default) only boolean vector is returned indicating
 if coordinates are inside or outside any region.}
 }
 \description{
-Finds the spatial attributes of coordinates (longitude and latitude)
+Returns spatial attributes of coordinates (longitude and latitude)
 given spatial polygons.
 }
 
