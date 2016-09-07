@@ -2,7 +2,7 @@
 % Please edit documentation in R/tile_encode.R
 \name{encode}
 \alias{encode}
-\title{Encode coordinates to codes}
+\title{Encode coordinates to tile codes}
 \usage{
 encode(x, y, resolution, type = "zchords")
 }

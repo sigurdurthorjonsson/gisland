@@ -98,12 +98,16 @@ code_triplet <- function(lat, lon) {
 csquare_area <- function(x, method = "geo") {
 
   # center point
-  x <-   decode_csquare(x)
+  x <-
+    dplyr::data_frame(sq = decode(x, type = "csquare")) %>%
+    tidyr::separate(sq, c("lon", "lat"), sep = ":", convert = TRUE)
   # create a "polygon" for one csquare
-  x <- data.frame(lon = c(x$lon-0.025,x$lon-0.025,x$lon+0.025,x$lon+0.025,x$lon-0.025),
-                  lat = c(x$lat-0.025,x$lat+0.025,x$lat+0.025,x$lat-0.025,x$lat-0.025))
+
   # calculate area
   if(method == "geo") {
+    x <- data.frame(id = rep(1:nrow(x), each = 5),
+                    lon = c(x$lon-0.025,x$lon-0.025,x$lon+0.025,x$lon+0.025,x$lon-0.025),
+                    lat = c(x$lat-0.025,x$lat+0.025,x$lat+0.025,x$lat-0.025,x$lat-0.025))
     x <- geo::geoarea(x)
     return(x)
   }
@@ -154,8 +158,10 @@ csquare_resolution <- function(csquare) {
 decode_csquare <- function(x, resolution, baf = 0) {
 
   if(missing(resolution)) {
-    resolution <- csquare_resolution(x)
+    resolution <- unique(csquare_resolution(x))
   }
+
+  if(length(resolution) > 1) stop("more than one csquare resolution")
 
   if(!resolution %in% c(10,5,1,0.5,0.1,0.05,0.01)) stop("resolution not in range: c(10,5,1,0.5,0.1,0.05,0.01)")
 
@@ -193,37 +199,37 @@ decode_csquare <- function(x, resolution, baf = 0) {
   if(resolution == 10) {
     lat1 = ((g1lat*10) + 5) * signY
     lon1 = ((g1lon*10) + 5) * signX
-    return(data.frame(lat = lat1, lon = lon1))
+    return(paste(lon1, lat1, sep = ":"))
   }
   if(resolution == 5) {
     lat2 = ((g1lat*10) + (g2lat2 * 5) + 2.5) * signY
     lon2 = ((g1lon*10) + (g2lon2 * 5) + 2.5) * signX
-    return(data.frame(lat = lat2, lon = lon2))
+    return(paste(lon2, lat2, sep = ":"))
   }
   if(resolution == 1) {
     lat3 = ((g1lat*10) + g2lat + 0.5) * signY
     lon3 = ((g1lon*10) + g2lon + 0.5) * signX
-    return(data.frame(lat = lat3, lon = lon3))
+    return(paste(lon3, lat3, sep = ":"))
   }
   if(resolution == 0.5) {
     lat4 = ((g1lat*10) + g2lat + (g3lat2 * 0.5) + 0.25) * signY
     lon4 = ((g1lon*10) + g2lon + (g3lon2 * 0.5) + 0.25) * signX
-    return(data.frame(lat = lat4, lon = lon4))
+    return(paste(lon4, lat4, sep = ":"))
   }
   if(resolution == 0.1) {
     lat5 = ((g1lat*10) + g2lat + (g3lat * 0.1) + 0.05) * signY
     lon5 = ((g1lon*10) + g2lon + (g3lon * 0.1) + 0.05) * signX
-    return(data.frame(lat = lat5, lon = lon5))
+    return(paste(lon5, lat5, sep = ":"))
   }
   if(resolution == 0.05) {
     lat6 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat2 * 0.05) + 0.025) * signY
     lon6 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon2 * 0.05) + 0.025) * signX
-    return(data.frame(lat = lat6, lon = lon6))
+    return(paste(lon6, lat6, sep = ":"))
   }
   if(resolution == 0.01) {
     lat7 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat * 0.01) + 0.005)  * signY
     lon7 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005)  * signX
-    return(data.frame(lat = lat7, lon = lon7))
+    return(paste(lon7, lat7, sep = ":"))
   }
 }
 

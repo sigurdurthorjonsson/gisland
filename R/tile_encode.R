@@ -1,20 +1,4 @@
-#
-# encode(x, y, resolution, type)
-# type = c("ztiles", "csquare", "ices", "iceland")
-# resolution:
-#  z:  c(x,y)
-#  c:  c(x) any of 10, 5, 1, 0.5, 0.1, 0.05 and 0.01 in decimal degrees
-#  ices: "large"/"small":
-#      large: same as c(1, 0.5)
-#      small: same as c(1/3, 0.5/3)
-#  iceland:
-#      large: same as c(1, 0.5)
-#      small: same as c(1/2, 0.5/2)
-# the default would is:
-#  encode(x, y, resolution, type = "ztiles")
-# if resolution is missing then use c(1, 0.5)
-
-#' @title Encode coordinates to codes
+#' @title Encode coordinates to tile codes
 #'
 #' @description xxx.
 #'
@@ -70,13 +54,13 @@ encode <- function(x, y, resolution, type = "zchords") {
 #' lon:lat, the numerical specifying the central positions.
 #'
 #' @details The tile encoding system is inspired by the code \code{geo::d2dr}
-#' created by Sigurður Þór Jónsson. In acknowledgment to the author and David,
-#' this tile convention is referred to as zchords (__Z(yggi's)-chords__).
+#' created by Sigurður Þór Jónsson. In acknowledgment to the code author and David,
+#' this tile convention is referred to as zchords (\textbf{Z(yggy's)-chords}).
 #' It has the advantages over the ICES statistical rectangle encoding and the
 #' Icelandic native's "Tilkynningaskyldureitur" that it is global. In addition
-#' it has the advantage over the __csquare__ encoding in that the resolution
+#' it has the advantage over the \textbf{csquare} encoding in that the resolution
 #' can be anything and is not limited by having equal decimal longitude and
-#' latitude degree-resolution. The __zchords__ is actually all inclusive,
+#' latitude degree-resolution. The \textbf{zchords} is actually all inclusive,
 #' encompassing all the above encoding system. As an added bonus the code
 #' nomenclature is not chipered.
 #'

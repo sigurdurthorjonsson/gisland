@@ -26,10 +26,10 @@ r2lat <- function(x) {
 }
 
 #' degrees
-#' 
+#'
 #' Af function that adds the suffix degree to object. Used e.g.
 #' in \code{pretty_coordinates}
-#' 
+#'
 #' @param x A value or text
 degrees <- function(x) paste0(x,"\u00B0")
 
@@ -51,15 +51,15 @@ pretty_coordinates <- function(x,suffix="") {
 #'
 #' Extracts coordinaes from each spatial object into a \code{data.frame} and
 #' separates each with a row of NA's ("lifts the pen" effect).
-#' 
+#'
 #' Can take some time (function currently based on a for-loop) if object large.
 #'
 #' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
-#' 
+#'
 #' @export
 #'
 #' @return A \code{data.frame} containg columns lat and lon
-#' 
+#'
 #' @param x Typically a spatial object
 #' @param hole A boolean (TRUE or FALSE). If not specified (default) then
 #' everything is returned.
@@ -74,15 +74,15 @@ sp_to_geo <- function(x, hole) {
   x <- ggplot2::fortify(x)
   cn <- c('lat','long')
   blank <- data.frame(lat=NA,long=NA)
-  
+
   if(!missing(hole)) {
-  x <- x[x$hole == hole,] 
+  x <- x[x$hole == hole,]
   }
-  
-  
+
+
   groups <- unique(x$group)
-  
-  
+
+
 
   for (i in 1:length(groups)) {
     x1 <- x[x$group == groups[i],cn]
@@ -104,7 +104,7 @@ sp_to_geo <- function(x, hole) {
 #' whose projection is in a non-coordinate format.
 #'
 #' @export
-#' 
+#'
 #' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
 #'
 #' @param x A SpatialPolygon object
@@ -161,10 +161,10 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
       xy <- sp::Polygons(list(sp::Polygon(xy)),ID=as.character(ncounter))
       polygons.list[[ncounter]] <- xy
       if(ncounter == 1) {
-        df <- data.frame(ID=as.character(ncounter),
+        df2 <- data.frame(ID=as.character(ncounter),
                          group=group.names[j])
       } else {
-        df <- rbind(df,
+        df2 <- rbind(df2,
                     data.frame(ID=as.character(ncounter),
                                group=group.names[j]))
       }
@@ -183,27 +183,27 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
 
 
 #' Calculate area in square kilometers
-#' 
+#'
 #' A simpler wrapper around the \code{rgeos::gArea} for calculating area taking
 #' care of the projection of the object.
-#' 
+#'
 #' @export
-#' 
+#'
 #' @author Einar Hjorleifsson <einar.hjorleifsson@@gmail.com>
-#' 
+#'
 #' @param x Spatial object
 #' @param group_variable character vector specifying variable that separates
 #' polygons
-#' 
+#'
 #' @examples
 #' require(rgdal)
 #' geo_area(iceland)
 #' geo_area(eez)
 #' geo_area(skipaflokkur3)
 geo_area <- function(x, group_variable) {
-  
+
   # note there are more sp class objects that may work
-  if(class(x) %in% c("SpatialPolygonsDataFrame")) {
+  if(class(x) %in% c("SpatialPolygons", "SpatialPolygonsDataFrame")) {
     if(sp::proj4string(x) == gisland::PRO@projargs) {
       return(rgeos::gArea(sp::spTransform(x,gisland::ISN93))/1e6)
     } else {
@@ -211,22 +211,22 @@ geo_area <- function(x, group_variable) {
         return(rgeos::gArea(x)/1e6)
     }
   }
-  
+
   if(class(x) %in% c("data.frame")) {
-    
+
     return(geoarea2(x, group_variable = group_variable))
-    
+
   }
-  
+
 }
 
 
-geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method = F, ngrdpts = 2000, 
-          robust = T) 
+geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method = F, ngrdpts = 2000,
+          robust = T)
 {
-  
+
   area <- 0
-  
+
   if(missing(group_variable)) {
     data <- geo::geo.Split.poly(data)
   } else {
@@ -235,25 +235,25 @@ geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method =
     data <- data$data
   }
   if (old.method) {
-    for (i in 1:length(data)) area <- area + geoarea.old(data[[i]], 
+    for (i in 1:length(data)) area <- area + geoarea.old(data[[i]],
                                                          ngrdpts, robust)
   }
   else {
     area <- 0
     for (i in 1:length(data)) {
-      if (Projection == "Lambert") 
-        data[[i]] <- geo::lambert(data[[i]]$lat, data[[i]]$lon, 
+      if (Projection == "Lambert")
+        data[[i]] <- geo::lambert(data[[i]]$lat, data[[i]]$lon,
                              mean(data[[i]]$lat), mean(data[[i]]$lon), mean(data[[i]]$lat))
-      else data[[i]] <- geo::mercator(data[[i]]$lat, data[[i]]$lon, 
+      else data[[i]] <- geo::mercator(data[[i]]$lat, data[[i]]$lon,
                                  b0 = mean(data[[i]]$lat))
       data[[i]] <- data.frame(x = data[[i]]$x, y = data[[i]]$y)
       n <- nrow(data[[i]])
-      area <- area + abs(sum(data[[i]]$x[1:(n - 1)] * data[[i]]$y[2:n] - 
+      area <- area + abs(sum(data[[i]]$x[1:(n - 1)] * data[[i]]$y[2:n] -
                                data[[i]]$x[2:n] * data[[i]]$y[1:(n - 1)], na.rm = T)/2)
     }
   }
   return(area)
-} 
+}
 
 #' Calculate area of a tile given resolution
 #'
@@ -275,20 +275,20 @@ geoarea2 <- function (data, Projection = "Lambert", group_variable, old.method =
 #  rowwise() %>%
 #  dplyr::mutate(area = tile_area(x, y, dx = 1, dy = 0.5))
 tile_area <- function(x, y, dx, dy) {
-  
+
   dx <- abs(dx/2)  # half the distance
   dy <- abs(dy/2)  # ...
   d <- data.frame(lon = c(x - dx, x - dx, x + dx, x + dx, x - dx),
                   lat = c(y - dy, y + dy, y + dy, y - dy, y - dy))
   # calculate area
   d <- geo_area(d)
-  
+
   # this does not work:
   # d <-
   #  d %>%
   #  rowwise()
   # d <- geo_area(d)
-  
+
   return(d)
-  
+
 }
