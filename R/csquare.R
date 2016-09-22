@@ -191,40 +191,42 @@ decode_csquare <- function(x, resolution, baf = 0) {
 
     # central position
   if(resolution == 10) {
-    lat1 = ((g1lat*10) + 5) * signY
-    lon1 = ((g1lon*10) + 5) * signX
-    return(data.frame(lat = lat1, lon = lon1))
+    lat = ((g1lat*10) + 5) * signY
+    lon = ((g1lon*10) + 5) * signX
+    #return(data.frame(lat = lat1, lon = lon1))
   }
   if(resolution == 5) {
-    lat2 = ((g1lat*10) + (g2lat2 * 5) + 2.5) * signY
-    lon2 = ((g1lon*10) + (g2lon2 * 5) + 2.5) * signX
-    return(data.frame(lat = lat2, lon = lon2))
+    lat = ((g1lat*10) + (g2lat2 * 5) + 2.5) * signY
+    lon = ((g1lon*10) + (g2lon2 * 5) + 2.5) * signX
+    #return(data.frame(lat = lat2, lon = lon2))
   }
   if(resolution == 1) {
-    lat3 = ((g1lat*10) + g2lat + 0.5) * signY
-    lon3 = ((g1lon*10) + g2lon + 0.5) * signX
-    return(data.frame(lat = lat3, lon = lon3))
+    lat = ((g1lat*10) + g2lat + 0.5) * signY
+    lon = ((g1lon*10) + g2lon + 0.5) * signX
+    #return(data.frame(lat = lat3, lon = lon3))
   }
   if(resolution == 0.5) {
-    lat4 = ((g1lat*10) + g2lat + (g3lat2 * 0.5) + 0.25) * signY
-    lon4 = ((g1lon*10) + g2lon + (g3lon2 * 0.5) + 0.25) * signX
-    return(data.frame(lat = lat4, lon = lon4))
+    lat = ((g1lat*10) + g2lat + (g3lat2 * 0.5) + 0.25) * signY
+    lon = ((g1lon*10) + g2lon + (g3lon2 * 0.5) + 0.25) * signX
+    #return(data.frame(lat = lat4, lon = lon4))
   }
   if(resolution == 0.1) {
-    lat5 = ((g1lat*10) + g2lat + (g3lat * 0.1) + 0.05) * signY
-    lon5 = ((g1lon*10) + g2lon + (g3lon * 0.1) + 0.05) * signX
-    return(data.frame(lat = lat5, lon = lon5))
+    lat = ((g1lat*10) + g2lat + (g3lat * 0.1) + 0.05) * signY
+    lon = ((g1lon*10) + g2lon + (g3lon * 0.1) + 0.05) * signX
+    #return(data.frame(lat = lat5, lon = lon5))
   }
   if(resolution == 0.05) {
-    lat6 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat2 * 0.05) + 0.025) * signY
-    lon6 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon2 * 0.05) + 0.025) * signX
-    return(data.frame(lat = lat6, lon = lon6))
+    lat = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat2 * 0.05) + 0.025) * signY
+    lon = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon2 * 0.05) + 0.025) * signX
+    #return(data.frame(lat = lat6, lon = lon6))
   }
   if(resolution == 0.01) {
-    lat7 = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat * 0.01) + 0.005)  * signY
-    lon7 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005)  * signX
-    return(data.frame(lat = lat7, lon = lon7))
+    lat = ((g1lat*10) + g2lat + (g3lat * 0.1) + (g4lat * 0.01) + 0.005)  * signY
+    lon = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005)  * signX
+    #return(data.frame(lat = lat7, lon = lon7))
   }
+
+  return(paste0(lon, ":", lat))
 }
 
 # internal - used in csquare_lat
