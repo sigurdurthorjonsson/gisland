@@ -231,6 +231,8 @@ decode_csquare <- function(x, resolution, baf = 0) {
     lon7 = ((g1lon*10) + g2lon + (g3lon * 0.1) + (g4lon * 0.01) + 0.005)  * signX
     return(paste(lon7, lat7, sep = ":"))
   }
+
+  return(paste0(lon, ":", lat))
 }
 
 # internal - used in csquare_lat
