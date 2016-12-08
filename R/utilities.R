@@ -172,7 +172,7 @@ df_2_spdf <- function(df,col.names=c("lon","lat","group","id")) {
     } # next segment
   } # next group
   d.sp <- sp::SpatialPolygons(polygons.list,proj4string=gisland::PRO)
-  d.spdf <- sp::SpatialPolygonsDataFrame(d.sp, df, match.ID = TRUE)
+  d.spdf <- sp::SpatialPolygonsDataFrame(d.sp, df2, match.ID = TRUE)
   return(d.spdf)
 }
 
