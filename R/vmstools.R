@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # clean date mess in data provided with the vmstools package
 tidy_date <- function(date) {
-  date <- if_else(stringr::str_sub(date, 7) == "1800",
+  date <- dplyr::if_else(stringr::str_sub(date, 7) == "1800",
                   stringr::str_replace(date, "1800", "1803"),
                   stringr::str_replace(date, "1801", "1804"))
   return(date)
@@ -21,7 +21,7 @@ tidy_date <- function(date) {
 #' @export
 #'
 tidy_tacsat <- function(d) {
-  
+
   d <-
     d %>%
     dplyr::tbl_df() %>%
@@ -34,16 +34,16 @@ tidy_tacsat <- function(d) {
     dplyr::select(pid, VE_COU, VE_REF, SI_DATIM, year,
                   SI_LATI, SI_LONG, SI_SP, SI_HE) %>%
     dplyr::distinct()
-  
+
   return(d)
-  
+
 }
 
 #' tidy eflalo types of data
 #'
 #' @param d eflalo type of dataframe
 #' @param drop_columns drop columns used for deriving time
-#' @param wide TRUE (default) returns orginal wide format 
+#' @param wide TRUE (default) returns orginal wide format
 #' @param overlaps FALSE (default) trips interval overlap. If set to TRUE
 #' will ...
 #'
@@ -54,7 +54,7 @@ tidy_eflalo <- function(d,
                         drop_columns = FALSE,
                         wide = TRUE,
                         overlaps = FALSE) {
-  
+
   d <-
     d %>%
     dplyr::mutate(FT_DDAT = tidy_date(FT_DDAT),
@@ -67,49 +67,49 @@ tidy_eflalo <- function(d,
                   LE_UNIT = as.character(LE_UNIT)) %>%
     dplyr::distinct() %>%
     dplyr::tbl_df()
-  
+
   if(drop_columns) {
     d <-
       d %>%
       select(-c(FT_DDAT, FT_DTIME, FT_LDAT, FT_LTIME))
   }
-  
+
   if(wide) return(d)
-  
+
   vessel <-
     d %>%
     dplyr::select(starts_with("VE_")) %>%
     dplyr::distinct() %>%
     dplyr::mutate(vid = 1:n()) %>%
     dplyr::select(vid, dplyr::starts_with("VE_"))
-  
+
   # Note that trip does not contain a gear column
   trip <-
     d %>%
     dplyr::select(VE_REF, VE_COU, FT_REF:FT_DHAR, FT_DDATIM, FT_LCOU, FT_LHAR, FT_LDATIM) %>%
     dplyr::distinct()
-  
+
   if(!overlaps) {
     trip <-
       trip %>%
       dplyr::arrange(VE_REF, FT_DDATIM) %>%
       dplyr::group_by(VE_REF) %>%
       # there is one case where this occurs
-      dplyr::mutate(FT_DDATIM = if_else(FT_DDATIM == FT_LDATIM, FT_DDATIM - lubridate::minutes(1), FT_DDATIM),
+      dplyr::mutate(FT_DDATIM = dplyr::if_else(FT_DDATIM == FT_LDATIM, FT_DDATIM - lubridate::minutes(1), FT_DDATIM),
                     # cases where landing time is the same as the next trip departure time
                     FT_LDATIM = dplyr::if_else(FT_LDATIM == dplyr::lead(FT_DDATIM),
                                                FT_LDATIM - lubridate::minutes(1),
                                                FT_LDATIM,
                                                FT_LDATIM)) %>%
       ungroup()
-    
+
   }
-  
+
   station <-
     d %>%
     dplyr::select(VE_REF, FT_REF, LE_ID:LE_EFF_VMS) %>%
     dplyr::distinct()
-  
+
   # THE CATCH
   x1 <-
     d %>%
@@ -118,22 +118,22 @@ tidy_eflalo <- function(d,
     dplyr::filter(catch != 0) %>%
     dplyr::mutate(species = stringr::str_sub(species, 7)) %>%
     dplyr::distinct()
-  
+
   x2 <-
     d %>%
     dplyr::select(LE_ID, dplyr::contains("_EURO_")) %>%
     tidyr::gather(species, value, -LE_ID) %>%
     dplyr::filter(value != 0) %>%
     dplyr::mutate(species = stringr::str_sub(species, 9))
-  
+
   catch <-
     dplyr::full_join(x1, x2, by = c("LE_ID", "species"))
-  
+
   return(list(vessel  = vessel,
               trip    = trip,
               station = station,
               catch   = catch))
-  
+
 }
 
 
@@ -156,14 +156,14 @@ tidy_eflalo <- function(d,
 #'                                     20))))
 #' calc_interval(SI_DATIM)
 calc_interval <- function(x, w1 = 0.5, w2 = 0.5) {
-  
+
   w1 <- w1/(w1 + w2)
   w2 <- w2/(w1 + w2)
-  
+
   x1 <- (x - dplyr::lag(x))/lubridate::dminutes(1)
   x1 <- ifelse(is.na(x1), dplyr::lead(x1), x1)
   x2 <- w1 * x1 + w2 * dplyr::lead(x1)
   x2 <- ifelse(is.na(x2), x1, x2)
-  
+
   return(x2)
 }

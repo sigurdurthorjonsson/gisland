@@ -55,12 +55,12 @@ encode <- function(x, y, resolution, type = "zchords") {
 #'
 #' @details The tile encoding system is inspired by the code \code{geo::d2dr}
 #' created by Sigurður Þór Jónsson. In acknowledgment to the code author and David,
-#' this tile convention is referred to as zchords (\textbf{Z(yggy's)-chords}).
+#' this tile convention is referred to as zchords (Z(yggy's)-chords).
 #' It has the advantages over the ICES statistical rectangle encoding and the
 #' Icelandic native's "Tilkynningaskyldureitur" that it is global. In addition
-#' it has the advantage over the \textbf{csquare} encoding in that the resolution
+#' it has the advantage over the csquare encoding in that the resolution
 #' can be anything and is not limited by having equal decimal longitude and
-#' latitude degree-resolution. The \textbf{zchords} is actually all inclusive,
+#' latitude degree-resolution. The zchords is actually all inclusive,
 #' encompassing all the above encoding system. As an added bonus the code
 #' nomenclature is not chipered.
 #'
