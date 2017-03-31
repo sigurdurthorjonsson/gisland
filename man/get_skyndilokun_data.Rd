@@ -4,10 +4,12 @@
 \alias{get_skyndilokun_data}
 \title{Ná í upplýsingar um skyndilokun}
 \usage{
-get_skyndilokun_data(nr)
+get_skyndilokun_data(nr, ar)
 }
 \arguments{
-\item{nr}{Númer skyndilokunar (miðað við núverandi ár)}
+\item{nr}{Númer skyndilokunar}
+
+\item{ar}{Árið. Ef óskilgreint, þá er notað núverandi ár}
 }
 \description{
 XXX

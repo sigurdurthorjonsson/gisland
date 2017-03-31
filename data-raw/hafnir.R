@@ -6,7 +6,7 @@ library(gisland)
 
 mar <- src_oracle("mar")
 hafnir <-
-  mar:::ora_table(mar, "afli.stadur") %>%
+  mar:::tbl_mar(mar, "afli.stadur") %>%
   collect()
 hafnir$heiti <- stringr::str_trim(hafnir$heiti)
 loc <- geocode(hafnir$heiti)
