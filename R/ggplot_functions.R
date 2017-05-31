@@ -60,7 +60,6 @@ breaks <- function(from = -180, to = 180, step = 1) {
   dd <- trunc(x)
   j <- length(unique(dd)) != length(dd)
   dd <- abs(dd)
-  #sprintf("%X", as.integer(charToRaw("°")))
   txt <- paste(dd, "\u00B0", sep = "")
   mm <- x%%1
   mm <- round(mm * 60, 2)

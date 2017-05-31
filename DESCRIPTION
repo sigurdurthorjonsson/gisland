@@ -1,8 +1,8 @@
 Package: gisland
 Type: Package
 Title: Map data with focus on Icelandic ecoregion
-Version: 0.0.05
-Date: 2016-08-04
+Version: 0.0.06
+Date: 2016-05-31
 Author: Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
 Maintainer: Einar Hjorleifsson <einar.hjorleifsson@gmail.com>
 Description: More about what it does (maybe more than one line). And then some.
@@ -36,4 +36,4 @@ Suggests:
     rgdal,
     scales
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

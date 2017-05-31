@@ -292,3 +292,91 @@ tile_area <- function(x, y, dx, dy) {
   return(d)
 
 }
+
+#' @title Converts \code{data.frame} to SpatialLinesDataFrame
+#'
+#' @description Takes a data frame containing lon, lat, a grouping id 
+#' and then an id for each segment within the group and returns a
+#' Spatial Lines Data Frame.
+#'
+#' @export df_2_sldf2
+#'
+#' @param df A data.frame containing lon, lat, group and segment.id
+#' @param col.names A vector specifying the names of longitude, latitude, group and segment id
+
+df_2_sldf2 <-
+function (df, col.names = c("lon", "lat", "group", "id")) 
+{
+    if (any(is.na(match(col.names, names(df))))) {
+        cat(paste("Columns", col.names, "do not exist"))
+        return(invisible())
+    }
+    df <- df[, col.names]
+    names(df) <- c("x", "y", "group", "id")
+    group.names <- unique(df$group)
+    ncounter <- 1
+    lines.list = list()
+    for (j in 1:length(group.names)) {
+        d <- df[df$group == group.names[j], c("x", "y", "id")]
+        ids <- unique(d$id)
+        for (i in 1:length(ids)) {
+            xy <- d[d$id == ids[i], c("x", "y")]
+            xy <- sp::Lines(list(sp::Line(xy)), ID = as.character(ncounter))
+            lines.list[[ncounter]] <- xy
+            if (ncounter == 1) {
+                df2 <- data.frame(ID = as.character(ncounter), 
+                  group = group.names[j], id = ids[i])
+            }
+            else {
+                df2 <- rbind(df2, data.frame(ID = as.character(ncounter), 
+                  group = group.names[j], id = ids[i]))
+            }
+            ncounter <- ncounter + 1
+        }
+    }
+    d.sl <- sp::SpatialLines(lines.list, proj4string = gisland::PRO)
+    d.sldf <- sp::SpatialLinesDataFrame(d.sl, df2, match.ID = TRUE)
+    return(d.sldf)
+}
+
+#' @title Converts \code{data.frame} to simple SpatialLinesDataFrame
+#'
+#' @description Takes a data frame containing lon, lat, and a grouping id
+#' and returns a Spatial Lines Data Frame.
+#'
+#' @export df_2_sldf
+#'
+#' @param df A data.frame containing lon, lat, group and segment.id
+#' @param col.names A vector specifying the names of longitude, latitude, group and segment id
+
+df_2_sldf <-
+function (df, col.names = c("lon", "lat", "group")) 
+{
+    if (any(is.na(match(col.names, names(df))))) {
+        cat(paste("Columns", col.names, "do not exist"))
+        return(invisible())
+    }
+    df <- df[, col.names]
+    names(df) <- c("x", "y", "group")
+    group.names <- unique(df$group)
+    ncounter <- 1
+    lines.list = list()
+    for (i in 1:length(group.names)) {
+      d <- df[df$group == group.names[i], c("x", "y")]
+      xy <- d[ , c("x", "y")]
+      xy <- sp::Lines(list(sp::Line(xy)), ID = as.character(ncounter))
+      lines.list[[ncounter]] <- xy
+      if(ncounter == 1) {
+         df2 <- data.frame(ID = as.character(ncounter), 
+           group = group.names[i])
+       } else {
+         df2 <- rbind(df2, 
+           data.frame(ID = as.character(ncounter), 
+           group = group.names[i]))
+       }
+       ncounter <- ncounter + 1
+    }
+    d.sl <- sp::SpatialLines(lines.list, proj4string = gisland::PRO)
+    d.sldf <- sp::SpatialLinesDataFrame(d.sl, df2, match.ID = TRUE)
+    return(d.sldf)
+}
